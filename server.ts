@@ -660,6 +660,40 @@ app.post('/api/admin/clear-inquiries', requireAdminAuth, (req: AuthenticatedRequ
   res.json({ success: true, message: `Successfully cleared ${count} inquiries.`, clearedCount: count });
 });
 
+// GET /api/admin/backup (Export complete platform JSON backup)
+app.get('/api/admin/backup', requireAdminAuth, (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const backupData = {
+      timestamp: new Date().toISOString(),
+      platform: 'AHSAN AI LABS Enterprise Platform',
+      version: '2.5.0',
+      exportedBy: req.adminUser?.email || 'admin',
+      data: {
+        inquiries: db.getInquiries(),
+        services: db.getServices(false),
+        demos: db.getDemos(false),
+        faqs: db.getFaqs(false),
+        companyContent: db.getContent(),
+        settings: db.getSettings(),
+        auditLogs: db.getAuditLogs()
+      }
+    };
+
+    db.logAudit({
+      adminEmail: req.adminUser?.email || 'admin',
+      action: 'DATABASE_BACKUP_EXPORTED',
+      targetType: 'SYSTEM',
+      details: 'Full JSON system backup generated and downloaded.'
+    });
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="ahsan-ai-labs-backup-${Date.now()}.json"`);
+    res.json(backupData);
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: 'Failed to generate backup.' });
+  }
+});
+
 // ==========================================
 // ADMIN SERVICES CMS
 // ==========================================

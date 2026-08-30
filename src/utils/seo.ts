@@ -14,7 +14,8 @@ export interface PageMetaConfig {
 }
 
 const BASE_URL = 'https://ahsanailabs.com';
-const DEFAULT_OG_IMAGE = 'https://ahsanailabs.com/logo.svg';
+const DEFAULT_OG_IMAGE = 'https://ahsanailabs.com/og-preview.svg';
+const DEFAULT_LOGO_IMAGE = 'https://ahsanailabs.com/logo.svg';
 
 export const PAGE_SEO_MAP: Record<string, PageMetaConfig> = {
   '/': {

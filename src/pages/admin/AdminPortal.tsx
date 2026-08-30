@@ -42,7 +42,18 @@ import {
   FileSpreadsheet,
   Activity,
   TrendingUp,
-  Target
+  Target,
+  Menu,
+  X,
+  Copy,
+  FileDown,
+  UserPlus,
+  PhoneCall,
+  Share2,
+  CheckSquare,
+  Square,
+  Archive,
+  ArrowUpRight
 } from 'lucide-react';
 import { 
   AdminUser, 
@@ -54,7 +65,8 @@ import {
   CompanyContent, 
   SiteSettings, 
   AuditLog, 
-  ServiceType 
+  ServiceType,
+  ContactMethod
 } from '../../types';
 import { AnalyticsMonitoringView } from './analytics/AnalyticsMonitoringView';
 import { BrandLogo } from '../../components/BrandLogo';
@@ -94,6 +106,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Mobile Navigation Drawer State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   // Inquiries UI state
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -102,6 +117,27 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [newNoteText, setNewNoteText] = useState('');
   const [isRetryingNotification, setIsRetryingNotification] = useState(false);
   const [showClearConfirmModal, setShowClearConfirmModal] = useState(false);
+  const [selectedInquiryIds, setSelectedInquiryIds] = useState<string[]>([]);
+  const [copiedLeadSummary, setCopiedLeadSummary] = useState(false);
+  const [isDownloadingBackup, setIsDownloadingBackup] = useState(false);
+
+  // Manual Lead Modal State
+  const [showManualLeadModal, setShowManualLeadModal] = useState(false);
+  const [isCreatingManualLead, setIsCreatingManualLead] = useState(false);
+  const [manualLeadForm, setManualLeadForm] = useState({
+    fullName: '',
+    companyName: '',
+    email: '',
+    whatsapp: '',
+    country: 'United States',
+    service: 'AI Agents' as ServiceType,
+    industry: 'Technology',
+    problem: '',
+    requirements: '',
+    budget: '$5,000 - $10,000',
+    timeline: 'Within 2-4 Weeks',
+    preferredContact: 'WhatsApp' as ContactMethod
+  });
 
   // Modals & Editing
   const [editingService, setEditingService] = useState<Partial<ServiceItem> | null>(null);
@@ -243,6 +279,170 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  // --- BULK INQUIRIES EXPORT ---
+  const handleBulkExportCsv = () => {
+    const targetInquiries = inquiries.filter(i => selectedInquiryIds.includes(i._id));
+    if (targetInquiries.length === 0) return;
+
+    const headers = ['Inquiry ID', 'Created Date', 'Client Name', 'Company Name', 'Email', 'WhatsApp', 'Country', 'Service', 'Status', 'Budget', 'Requirements'];
+    const rows = targetInquiries.map(i => [
+      `"${i.inquiryId}"`,
+      `"${new Date(i.createdAt).toISOString()}"`,
+      `"${i.fullName.replace(/"/g, '""')}"`,
+      `"${i.companyName.replace(/"/g, '""')}"`,
+      `"${i.email}"`,
+      `"${i.whatsapp}"`,
+      `"${i.country}"`,
+      `"${i.service}"`,
+      `"${i.status}"`,
+      `"${i.budget || ''}"`,
+      `"${(i.requirements || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const link = document.createElement('a');
+    link.setAttribute('href', encodeURI(csvContent));
+    link.setAttribute('download', `selected_leads_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // --- BULK STATUS CHANGE ---
+  const handleBulkStatusChange = async (newStatus: InquiryStatus) => {
+    if (selectedInquiryIds.length === 0) return;
+    try {
+      await Promise.all(
+        selectedInquiryIds.map(id => 
+          fetch(`/api/admin/inquiries/${id}`, {
+            method: 'PATCH',
+            headers: authHeaders,
+            body: JSON.stringify({ status: newStatus })
+          })
+        )
+      );
+      setSelectedInquiryIds([]);
+      fetchAllData();
+    } catch (err) {
+      console.error('Failed to update bulk status:', err);
+    }
+  };
+
+  // --- SELECTION TOGGLES ---
+  const handleToggleSelectInquiry = (id: string) => {
+    setSelectedInquiryIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleToggleSelectAllInquiries = (filteredList: Inquiry[]) => {
+    if (selectedInquiryIds.length === filteredList.length) {
+      setSelectedInquiryIds([]);
+    } else {
+      setSelectedInquiryIds(filteredList.map(i => i._id));
+    }
+  };
+
+  // --- DOWNLOAD PLATFORM BACKUP ---
+  const handleDownloadBackup = async () => {
+    setIsDownloadingBackup(true);
+    try {
+      const res = await fetch('/api/admin/backup', { headers: authHeaders });
+      if (!res.ok) throw new Error('Backup failed');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ahsan-ai-labs-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      alert('Failed to generate full system backup.');
+    } finally {
+      setIsDownloadingBackup(false);
+    }
+  };
+
+  // --- CREATE MANUAL LEAD ---
+  const handleCreateManualLead = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualLeadForm.fullName || !manualLeadForm.email || !manualLeadForm.whatsapp) {
+      alert('Please fill out all required fields.');
+      return;
+    }
+
+    setIsCreatingManualLead(true);
+    try {
+      const res = await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(manualLeadForm)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShowManualLeadModal(false);
+        setManualLeadForm({
+          fullName: '',
+          companyName: '',
+          email: '',
+          whatsapp: '',
+          country: 'United States',
+          service: 'AI Agents' as ServiceType,
+          industry: 'Technology',
+          problem: '',
+          requirements: '',
+          budget: '$5,000 - $10,000',
+          timeline: 'Within 2-4 Weeks',
+          preferredContact: 'WhatsApp'
+        });
+        fetchAllData();
+      } else {
+        alert(data.message || 'Failed to create lead.');
+      }
+    } catch (err) {
+      alert('Error creating manual lead.');
+    } finally {
+      setIsCreatingManualLead(false);
+    }
+  };
+
+  // --- COPY LEAD SUMMARY ---
+  const handleCopyLeadSummary = (inq: Inquiry) => {
+    const summary = `📌 *AHSAN AI LABS — INQUIRY DOSSIER [${inq.inquiryId}]*
+• *Client:* ${inq.fullName} (${inq.companyName || 'Private Enterprise'})
+• *Service:* ${inq.service}
+• *Status:* ${inq.status}
+• *Country:* ${inq.country}
+• *Budget:* ${inq.budget || 'Custom'}
+• *Timeline:* ${inq.timeline}
+• *WhatsApp:* ${inq.whatsapp}
+• *Email:* ${inq.email}
+• *Problem:* ${inq.problem}
+• *Requirements:* ${inq.requirements}`;
+
+    navigator.clipboard.writeText(summary);
+    setCopiedLeadSummary(true);
+    setTimeout(() => setCopiedLeadSummary(false), 2500);
+  };
+
+  // --- CALCULATE ESTIMATED PIPELINE VALUE ---
+  const calculatePipelineValue = () => {
+    let total = 0;
+    inquiries.forEach(inq => {
+      if (inq.status === 'CLOSED') return;
+      const b = inq.budget || '';
+      if (b.includes('$25,000+')) total += 35000;
+      else if (b.includes('$10,000 - $25,000')) total += 17500;
+      else if (b.includes('$5,000 - $10,000')) total += 7500;
+      else if (b.includes('$3,000 - $5,000')) total += 4000;
+      else if (b.includes('Under $3,000')) total += 2000;
+      else total += 5000;
+    });
+    return total;
   };
 
   // --- CLEAR TEST INQUIRIES ---
@@ -601,8 +801,122 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   return (
     <div className="min-h-screen bg-[#060c18] text-slate-100 flex flex-col md:flex-row">
       
-      {/* SIDEBAR NAVIGATION */}
-      <aside className="w-full md:w-64 bg-[#081120] border-r border-slate-800/80 flex flex-col justify-between shrink-0">
+      {/* MOBILE TOP BAR (Visible on screens < md) */}
+      <div className="md:hidden sticky top-0 z-40 bg-[#081120]/95 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center space-x-2" onClick={onNavigateHome}>
+          <BrandLogo size="sm" taglineClassName="text-cyan-400 font-mono tracking-wider" />
+        </div>
+
+        <div className="flex items-center space-x-2">
+          {stats?.newInquiries > 0 && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-400 text-slate-950 flex items-center space-x-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-950 animate-pulse"></span>
+              <span>{stats.newInquiries} New</span>
+            </span>
+          )}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 hover:text-white"
+            aria-label="Toggle Navigation Menu"
+          >
+            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+      </div>
+
+      {/* MOBILE SLIDE-OVER DRAWER OVERLAY */}
+      {isMobileMenuOpen && (
+        <div 
+          className="md:hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <div 
+            className="fixed top-0 right-0 bottom-0 w-4/5 max-w-xs bg-[#081120] border-l border-slate-800 p-6 flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div>
+              <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
+                <BrandLogo size="sm" taglineClassName="text-cyan-400 font-mono tracking-wider" />
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-1.5 rounded-lg bg-slate-900 text-slate-400 hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Mobile Navigation List */}
+              <nav className="space-y-1.5">
+                {navItems.map((item) => {
+                  const isActive = currentTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setCurrentTab(item.id);
+                        setSelectedInquiry(null);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-semibold transition-all ${
+                        isActive 
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' 
+                          : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2.5">
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </div>
+                      {item.count ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-400 text-slate-950">
+                          {item.count}
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+
+            {/* Mobile Footer */}
+            <div className="pt-6 border-t border-slate-800 space-y-3">
+              <div className="text-xs text-slate-400 px-1">
+                <div className="font-semibold text-slate-200">{admin.name}</div>
+                <div className="text-[10px] text-blue-400 font-mono">{admin.role}</div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setShowPasswordModal(true);
+                  }}
+                  className="py-2 px-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-xs font-semibold flex items-center justify-center space-x-1"
+                >
+                  <KeyRound className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Password</span>
+                </button>
+                <button
+                  onClick={onNavigateHome}
+                  className="py-2 px-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-xs font-semibold flex items-center justify-center space-x-1"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Live Site</span>
+                </button>
+              </div>
+              <button
+                onClick={onLogout}
+                className="w-full py-2.5 rounded-xl bg-red-950/60 text-red-300 border border-red-900/80 text-xs font-bold flex items-center justify-center space-x-2"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DESKTOP SIDEBAR NAVIGATION (Visible on md+) */}
+      <aside className="hidden md:flex w-64 bg-[#081120] border-r border-slate-800/80 flex-col justify-between shrink-0">
         
         {/* Brand header */}
         <div className="p-6">
@@ -702,18 +1016,34 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={() => setShowManualLeadModal(true)}
+              className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/30 flex items-center space-x-1.5 transition-all"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Record Lead</span>
+            </button>
+            <button
+              onClick={handleDownloadBackup}
+              disabled={isDownloadingBackup}
+              className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold flex items-center space-x-1.5 transition-colors"
+              title="Download Platform JSON Snapshot"
+            >
+              <Archive className={`w-3.5 h-3.5 ${isDownloadingBackup ? 'animate-spin' : 'text-purple-400'}`} />
+              <span className="hidden sm:inline">Backup</span>
+            </button>
             <button
               onClick={fetchAllData}
               disabled={loading}
               className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white text-xs flex items-center space-x-1.5 transition-colors"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
+              <span className="hidden sm:inline">Refresh</span>
             </button>
             <button
               onClick={onNavigateHome}
-              className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors flex items-center space-x-1"
+              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors flex items-center space-x-1"
             >
               <span>Live Site</span>
               <ExternalLink className="w-3.5 h-3.5 ml-1" />
@@ -724,31 +1054,35 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         {/* 1. OVERVIEW TAB */}
         {currentTab === 'overview' && stats && (
           <div className="space-y-8 animate-in fade-in duration-200">
-            {/* Stat Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            
+            {/* High-Level Financial & Conversion Metrics */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
               {[
+                { label: 'Estimated Pipeline', value: `$${calculatePipelineValue().toLocaleString()}`, color: 'text-emerald-400', isMonetary: true },
                 { label: 'Total Inquiries', value: stats.totalInquiries, color: 'text-white' },
                 { label: 'New / Unreviewed', value: stats.newInquiries, color: 'text-cyan-400' },
                 { label: 'Contacted', value: stats.contactedInquiries, color: 'text-purple-400' },
                 { label: 'In Progress', value: stats.inProgressInquiries, color: 'text-emerald-400' },
-                { label: 'Completed', value: stats.completedInquiries, color: 'text-blue-400' },
-                { label: 'Active Services', value: stats.totalServices, color: 'text-amber-400' }
+                { label: 'Completed', value: stats.completedInquiries, color: 'text-blue-400' }
               ].map((s, idx) => (
                 <div key={idx} className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-1">
                   <div className="text-[11px] font-medium text-slate-400">{s.label}</div>
-                  <div className={`text-2xl sm:text-3xl font-bold font-mono ${s.color}`}>{s.value}</div>
+                  <div className={`text-xl sm:text-2xl font-bold font-mono ${s.color}`}>{s.value}</div>
                 </div>
               ))}
             </div>
 
-            {/* Inquiries by Service & Quick Actions */}
+            {/* Quick Action Engine & Pipeline Overview */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               
               {/* Service Distribution */}
               <div className="lg:col-span-6 p-6 rounded-3xl bg-slate-900/60 border border-slate-800 space-y-4">
-                <h3 className="text-sm font-bold font-heading text-white uppercase tracking-wider">
-                  Demand by Solution
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold font-heading text-white uppercase tracking-wider">
+                    Demand by Solution
+                  </h3>
+                  <span className="text-[11px] text-slate-400 font-mono">Live Distribution</span>
+                </div>
                 <div className="space-y-3">
                   {Object.keys(stats.serviceDistribution || {}).length === 0 ? (
                     <div className="text-slate-500 text-xs py-4 text-center">No inquiry service data recorded yet.</div>
@@ -846,7 +1180,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-left text-xs min-w-[640px]">
                   <thead className="text-slate-400 border-b border-slate-800 uppercase tracking-wider text-[10px]">
                     <tr>
                       <th className="pb-3">ID</th>
@@ -854,7 +1188,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                       <th className="pb-3">Service</th>
                       <th className="pb-3">Country</th>
                       <th className="pb-3">Status</th>
-                      <th className="pb-3">Timeline</th>
+                      <th className="pb-3">Budget</th>
                       <th className="pb-3 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -876,7 +1210,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                           <td className="py-3 text-slate-200">{inq.service}</td>
                           <td className="py-3">{inq.country}</td>
                           <td className="py-3">{getStatusBadge(inq.status)}</td>
-                          <td className="py-3 text-slate-400">{inq.timeline}</td>
+                          <td className="py-3 font-mono text-emerald-400">{inq.budget || 'Custom'}</td>
                           <td className="py-3 text-right">
                             <button
                               onClick={() => {
@@ -911,14 +1245,22 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             
             {/* Top Inquiries Actions Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <button
+                  onClick={() => setShowManualLeadModal(true)}
+                  className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center space-x-1.5 transition-colors shadow-sm"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Add Lead Manually</span>
+                </button>
+
                 <button
                   onClick={exportInquiriesToCsv}
                   disabled={inquiries.length === 0}
                   className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition-colors"
                 >
                   <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-                  <span>Export CSV</span>
+                  <span>Export All (CSV)</span>
                 </button>
 
                 {inquiries.length > 0 && (
@@ -927,15 +1269,50 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     className="px-3.5 py-2 rounded-xl bg-red-950/60 hover:bg-red-900 border border-red-800/80 text-red-300 text-xs font-semibold flex items-center space-x-1.5 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
-                    <span>Clear All Inquiries</span>
+                    <span>Clear Inquiries</span>
                   </button>
                 )}
               </div>
 
-              <div className="text-xs text-slate-400">
-                Total Inquiries: <span className="font-bold text-white font-mono">{inquiries.length}</span>
+              <div className="flex items-center space-x-4 text-xs text-slate-400">
+                <div>
+                  Pipeline: <span className="font-bold text-emerald-400 font-mono">${calculatePipelineValue().toLocaleString()}</span>
+                </div>
+                <div>
+                  Total: <span className="font-bold text-white font-mono">{inquiries.length}</span>
+                </div>
               </div>
             </div>
+
+            {/* Bulk Selection Action Bar (appears when items selected) */}
+            {selectedInquiryIds.length > 0 && (
+              <div className="p-3.5 rounded-2xl bg-blue-950/80 border border-blue-700/80 flex flex-wrap items-center justify-between gap-3 animate-in fade-in">
+                <div className="flex items-center space-x-2 text-xs text-blue-200">
+                  <CheckSquare className="w-4 h-4 text-cyan-400" />
+                  <span className="font-bold">{selectedInquiryIds.length}</span> leads selected
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="text-slate-400 text-[11px]">Mark as:</span>
+                  {(['CONTACTED', 'DISCUSSING', 'IN_PROGRESS', 'COMPLETED'] as InquiryStatus[]).map((st) => (
+                    <button
+                      key={st}
+                      onClick={() => handleBulkStatusChange(st)}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-blue-600 text-slate-200 text-[11px] font-bold border border-slate-700 transition-colors"
+                    >
+                      {st}
+                    </button>
+                  ))}
+                  <button
+                    onClick={handleBulkExportCsv}
+                    className="px-3 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-[11px] font-bold flex items-center space-x-1 ml-2"
+                  >
+                    <Download className="w-3 h-3" />
+                    <span>Export Selected</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Search and Filters Header */}
             <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -986,13 +1363,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             {selectedInquiry ? (
               /* Detailed Inquiry Inspector */
               <div className="p-6 rounded-3xl bg-slate-900 border border-blue-900/60 shadow-2xl space-y-6 animate-in fade-in duration-150">
-                <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800">
                   <div className="flex items-center space-x-3">
                     <button
                       onClick={() => setSelectedInquiry(null)}
                       className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
                     >
-                      ← Back to All Inquiries
+                      ← Back to Inquiries
                     </button>
                     <div>
                       <span className="font-mono text-cyan-400 font-bold text-sm">
@@ -1003,12 +1380,52 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   <div className="flex items-center space-x-2">
                     {getStatusBadge(selectedInquiry.status)}
                     <button
+                      onClick={() => handleCopyLeadSummary(selectedInquiry)}
+                      className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center space-x-1"
+                      title="Copy Dossier Markdown"
+                    >
+                      {copiedLeadSummary ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedLeadSummary ? 'Copied!' : 'Copy Summary'}</span>
+                    </button>
+                    <button
                       onClick={() => handleDeleteInquiry(selectedInquiry._id)}
                       className="p-1.5 rounded-lg bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 text-xs"
                       title="Delete Inquiry"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
+                  </div>
+                </div>
+
+                {/* Instant Client Outreach Fast Actions */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-950/60 to-purple-950/60 border border-blue-800/60 flex flex-wrap items-center justify-between gap-3">
+                  <div className="text-xs">
+                    <div className="font-bold text-white flex items-center space-x-1.5">
+                      <Sparkles className="w-4 h-4 text-cyan-400" />
+                      <span>One-Click Outreach Launchers</span>
+                    </div>
+                    <div className="text-slate-400 text-[11px]">Instant personalized WhatsApp & Email contact links</div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <a
+                      href={`https://wa.me/${selectedInquiry.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello ${selectedInquiry.fullName}, Ahsan from AHSAN AI LABS here regarding your inquiry for ${selectedInquiry.service}. Let's discuss your requirements and schedule a discovery call.`)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center space-x-1.5 shadow-md shadow-emerald-600/30 transition-colors"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>WhatsApp Direct Reply</span>
+                      <ArrowUpRight className="w-3 h-3" />
+                    </a>
+
+                    <a
+                      href={`mailto:${selectedInquiry.email}?subject=${encodeURIComponent(`AHSAN AI LABS — Project Scope: ${selectedInquiry.service}`)}&body=${encodeURIComponent(`Dear ${selectedInquiry.fullName},\n\nThank you for reaching out to AHSAN AI LABS regarding ${selectedInquiry.service}.\n\nWe have reviewed your project requirements:\n"${selectedInquiry.requirements}"\n\nLet's schedule a brief 15-minute discovery consultation to discuss the architecture and timeline.\n\nBest regards,\nAhsan Ali\nFounder & Principal AI Architect\nAHSAN AI LABS\nWhatsApp: +92 344 6899742`)}`}
+                      className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center space-x-1.5 transition-colors border border-slate-700"
+                    >
+                      <Mail className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Draft Email</span>
+                    </a>
                   </div>
                 </div>
 
@@ -1043,7 +1460,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                       <h4 className="font-bold text-white uppercase text-[11px] tracking-wider text-blue-400">
                         Customer & Business Profile
                       </h4>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <div className="text-slate-500">Contact Name</div>
                           <div className="font-semibold text-white text-sm">{selectedInquiry.fullName}</div>
@@ -1054,7 +1471,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                         </div>
                         <div>
                           <div className="text-slate-500">Email Address</div>
-                          <a href={`mailto:${selectedInquiry.email}`} className="text-blue-400 hover:underline">
+                          <a href={`mailto:${selectedInquiry.email}`} className="text-blue-400 hover:underline break-all">
                             {selectedInquiry.email}
                           </a>
                         </div>
@@ -1100,7 +1517,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-3 pt-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                         <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
                           <div className="text-slate-500 text-[10px]">Service Requested</div>
                           <div className="font-semibold text-white">{selectedInquiry.service}</div>
@@ -1203,13 +1620,26 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             ) : (
               /* Inquiries Table */
               <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800 overflow-x-auto">
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-left text-xs min-w-[720px]">
                   <thead className="text-slate-400 border-b border-slate-800 uppercase tracking-wider text-[10px]">
                     <tr>
+                      <th className="pb-3 w-10">
+                        <button
+                          onClick={() => handleToggleSelectAllInquiries(filteredInquiries)}
+                          className="text-slate-400 hover:text-white"
+                          title="Select / Deselect All"
+                        >
+                          {selectedInquiryIds.length === filteredInquiries.length && filteredInquiries.length > 0 ? (
+                            <CheckSquare className="w-4 h-4 text-cyan-400" />
+                          ) : (
+                            <Square className="w-4 h-4" />
+                          )}
+                        </button>
+                      </th>
                       <th className="pb-3">Inquiry ID</th>
                       <th className="pb-3">Customer & Company</th>
                       <th className="pb-3">Service</th>
-                      <th className="pb-3">Country</th>
+                      <th className="pb-3">Budget</th>
                       <th className="pb-3">Status</th>
                       <th className="pb-3">Date</th>
                       <th className="pb-3 text-right">Action</th>
@@ -1218,36 +1648,51 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   <tbody className="divide-y divide-slate-800/60 text-slate-300">
                     {filteredInquiries.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-12 text-center text-slate-500">
+                        <td colSpan={8} className="py-12 text-center text-slate-500">
                           {searchQuery || statusFilter !== 'ALL' || serviceFilter !== 'ALL'
                             ? 'No inquiries found matching your filters.'
-                            : 'No inquiries registered yet. The platform is ready to record new client requests.'}
+                            : 'No inquiries registered yet. Click "Add Lead Manually" or receive submissions from the website.'}
                         </td>
                       </tr>
                     ) : (
-                      filteredInquiries.map((inq) => (
-                        <tr key={inq._id} className="hover:bg-slate-900/40">
-                          <td className="py-3.5 font-mono text-cyan-400 font-semibold">{inq.inquiryId}</td>
-                          <td className="py-3.5 font-medium text-white">
-                            <div>{inq.fullName}</div>
-                            <div className="text-[11px] text-slate-400">{inq.companyName}</div>
-                          </td>
-                          <td className="py-3.5 text-slate-200">{inq.service}</td>
-                          <td className="py-3.5">{inq.country}</td>
-                          <td className="py-3.5">{getStatusBadge(inq.status)}</td>
-                          <td className="py-3.5 text-slate-400">
-                            {new Date(inq.createdAt).toLocaleDateString()}
-                          </td>
-                          <td className="py-3.5 text-right space-x-2">
-                            <button
-                              onClick={() => setSelectedInquiry(inq)}
-                              className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs"
-                            >
-                              Manage
-                            </button>
-                          </td>
-                        </tr>
-                      ))
+                      filteredInquiries.map((inq) => {
+                        const isSelected = selectedInquiryIds.includes(inq._id);
+                        return (
+                          <tr key={inq._id} className={`hover:bg-slate-900/50 ${isSelected ? 'bg-blue-950/30' : ''}`}>
+                            <td className="py-3.5">
+                              <button
+                                onClick={() => handleToggleSelectInquiry(inq._id)}
+                                className="text-slate-400 hover:text-white"
+                              >
+                                {isSelected ? (
+                                  <CheckSquare className="w-4 h-4 text-cyan-400" />
+                                ) : (
+                                  <Square className="w-4 h-4" />
+                                )}
+                              </button>
+                            </td>
+                            <td className="py-3.5 font-mono text-cyan-400 font-semibold">{inq.inquiryId}</td>
+                            <td className="py-3.5 font-medium text-white">
+                              <div>{inq.fullName}</div>
+                              <div className="text-[11px] text-slate-400">{inq.companyName}</div>
+                            </td>
+                            <td className="py-3.5 text-slate-200">{inq.service}</td>
+                            <td className="py-3.5 font-mono text-emerald-400 font-semibold">{inq.budget || 'Custom'}</td>
+                            <td className="py-3.5">{getStatusBadge(inq.status)}</td>
+                            <td className="py-3.5 text-slate-400">
+                              {new Date(inq.createdAt).toLocaleDateString()}
+                            </td>
+                            <td className="py-3.5 text-right space-x-2">
+                              <button
+                                onClick={() => setSelectedInquiry(inq)}
+                                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs"
+                              >
+                                Manage
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -1901,6 +2346,172 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/30"
                 >
                   {isUpdatingPassword ? 'Updating...' : 'Update Password'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* RECORD MANUAL LEAD MODAL */}
+      {showManualLeadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in overflow-y-auto">
+          <div className="w-full max-w-lg bg-slate-900 border border-blue-800/80 rounded-2xl p-6 space-y-4 shadow-2xl my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center space-x-2 text-white font-bold text-sm">
+                <UserPlus className="w-4 h-4 text-cyan-400" />
+                <span>Direct Lead / Client Entry</span>
+              </div>
+              <button
+                onClick={() => setShowManualLeadModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400">
+              Manually register a prospect from WhatsApp, phone call, LinkedIn, or personal referral into the CRM.
+            </p>
+
+            <form onSubmit={handleCreateManualLead} className="space-y-3 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-slate-300 font-medium">Contact Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. David Miller"
+                    value={manualLeadForm.fullName}
+                    onChange={(e) => setManualLeadForm({ ...manualLeadForm, fullName: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-300 font-medium">Company Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Horizon Fintech Ltd"
+                    value={manualLeadForm.companyName}
+                    onChange={(e) => setManualLeadForm({ ...manualLeadForm, companyName: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-slate-300 font-medium">Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="david@horizonfin.com"
+                    value={manualLeadForm.email}
+                    onChange={(e) => setManualLeadForm({ ...manualLeadForm, email: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-300 font-medium">WhatsApp / Phone *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="+1 555 342 1199"
+                    value={manualLeadForm.whatsapp}
+                    onChange={(e) => setManualLeadForm({ ...manualLeadForm, whatsapp: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <label className="text-slate-300 font-medium">Country</label>
+                  <input
+                    type="text"
+                    placeholder="United States"
+                    value={manualLeadForm.country}
+                    onChange={(e) => setManualLeadForm({ ...manualLeadForm, country: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-300 font-medium">Primary Service</label>
+                  <select
+                    value={manualLeadForm.service}
+                    onChange={(e) => setManualLeadForm({ ...manualLeadForm, service: e.target.value as ServiceType })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                  >
+                    <option value="AI Agents">AI Agents</option>
+                    <option value="AI Voice Agents">AI Voice Agents</option>
+                    <option value="AI Chatbots">AI Chatbots</option>
+                    <option value="Business Automation">Business Automation</option>
+                    <option value="WhatsApp Automation">WhatsApp Automation</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-300 font-medium">Estimated Budget</label>
+                  <select
+                    value={manualLeadForm.budget}
+                    onChange={(e) => setManualLeadForm({ ...manualLeadForm, budget: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                  >
+                    <option value="$1,000 - $3,000">$1,000 - $3,000</option>
+                    <option value="$3,000 - $5,000">$3,000 - $5,000</option>
+                    <option value="$5,000 - $10,000">$5,000 - $10,000</option>
+                    <option value="$10,000 - $25,000">$10,000 - $25,000</option>
+                    <option value="$25,000+">$25,000+</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-300 font-medium">Problem / Business Context</label>
+                <textarea
+                  rows={2}
+                  placeholder="What operational bottleneck or AI requirement does the client have?"
+                  value={manualLeadForm.problem}
+                  onChange={(e) => setManualLeadForm({ ...manualLeadForm, problem: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600 resize-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-300 font-medium">Project Scope / Technical Notes</label>
+                <textarea
+                  rows={2}
+                  placeholder="Key deliverables, models, integrations, or timelines discussed..."
+                  value={manualLeadForm.requirements}
+                  onChange={(e) => setManualLeadForm({ ...manualLeadForm, requirements: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600 resize-none"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowManualLeadModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreatingManualLead}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/30 flex items-center space-x-1.5"
+                >
+                  {isCreatingManualLead ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Recording...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-3.5 h-3.5" />
+                      <span>Save Lead to CRM</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
