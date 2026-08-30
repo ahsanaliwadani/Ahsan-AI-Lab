@@ -1,0 +1,6 @@
+{
+  "name": "AHSAN AI LABS",
+  "description": "Enterprise AI agents, voice agents, chatbots, business automation, and WhatsApp digital solutions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
