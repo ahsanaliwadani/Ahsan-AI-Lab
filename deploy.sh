@@ -76,20 +76,52 @@ fi
 
 # 5. Start MongoDB container via Docker Compose (Optional / Fallback to local atomic state)
 echo "--> [Step 5/8] Initializing MongoDB database container..."
+MONGO_CONTAINER_ACTIVE=false
 if command -v docker >/dev/null 2>&1; then
-  $SUDO docker compose up -d mongodb 2>/dev/null || docker compose up -d mongodb 2>/dev/null || echo "--> Note: Docker compose skipped; local atomic database engine is active."
+  if $SUDO docker compose up -d mongodb 2>/dev/null || docker compose up -d mongodb 2>/dev/null; then
+    MONGO_CONTAINER_ACTIVE=true
+    echo "--> MongoDB container running on 127.0.0.1:27017 (Database: AHSAN_AI_LABS)"
+  else
+    echo "--> Note: Docker compose skipped; local atomic database engine is active."
+  fi
 else
   echo "--> Docker not active. Using embedded atomic JSON database engine with instant recovery."
 fi
 
 # 6. Environment & Dependencies Setup
 echo "--> [Step 6/8] Configuring environment & building application..."
-if [ ! -f ".env" ] && [ -f ".env.example" ]; then
-  echo "--> Initializing .env from .env.example..."
-  cp .env.example .env
+if [ ! -f ".env" ]; then
+  if [ -f ".env.example" ]; then
+    echo "--> Initializing .env from .env.example..."
+    cp .env.example .env
+  else
+    echo "--> Creating new .env file..."
+    touch .env
+  fi
 fi
 
-mkdir -p logs data/analytics data/inquiries
+# Ensure MONGODB_URI is configured in .env if empty
+DEFAULT_MONGO_URI='mongodb://ahsan_admin:AhsanSecureMongoPass2026!@127.0.0.1:27017/AHSAN_AI_LABS?authSource=admin'
+if ! grep -q "^MONGODB_URI=" .env 2>/dev/null; then
+  echo "MONGODB_URI=\"${DEFAULT_MONGO_URI}\"" >> .env
+elif grep -qE '^MONGODB_URI=["'\''"]?$' .env 2>/dev/null || grep -q '^MONGODB_URI=$' .env 2>/dev/null; then
+  echo "--> Setting default MongoDB connection string in .env..."
+  # Replace empty MONGODB_URI line
+  sed -i.bak 's|^MONGODB_URI=.*|MONGODB_URI="mongodb://ahsan_admin:AhsanSecureMongoPass2026!@127.0.0.1:27017/AHSAN_AI_LABS?authSource=admin"|g' .env
+  rm -f .env.bak 2>/dev/null || true
+fi
+
+# Ensure DATABASE_NAME is present
+if ! grep -q "^DATABASE_NAME=" .env 2>/dev/null; then
+  echo "DATABASE_NAME=\"AHSAN_AI_LABS\"" >> .env
+fi
+
+# Ensure ADMIN_SECRET is present
+if ! grep -q "^ADMIN_SECRET=" .env 2>/dev/null; then
+  echo "ADMIN_SECRET=\"ahsan_ai_labs_super_secure_jwt_secret_key_2026\"" >> .env
+fi
+
+mkdir -p logs data/analytics data/inquiries public/uploads
 
 # Install dependencies and build frontend/backend bundles
 npm install

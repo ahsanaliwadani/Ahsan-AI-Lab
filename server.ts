@@ -1,15 +1,15 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import dotenv from 'dotenv';
 import compression from 'compression';
 import { createServer as createViteServer } from 'vite';
 import { db } from './server/db';
 import { AutomationEngine } from './server/automation';
-
-dotenv.config();
 
 const app = express();
 const PORT = 3000;
@@ -488,10 +488,9 @@ app.post('/api/admin/login', loginBruteForceProtector, (req: Request, res: Respo
       return res.status(400).json({ success: false, message: 'Email and password are required.' });
     }
 
-    const admin = db.findAdminByEmail(email);
-    const passwordMatches = admin ? bcrypt.compareSync(password, admin.passwordHash) : false;
+    const admin = db.authenticateAdmin(email, password);
 
-    if (!admin || !passwordMatches) {
+    if (!admin) {
       // Record failed attempt for rate limiting
       const now = Date.now();
       const current = loginAttemptsMap.get(ip) || { attempts: 0, lockUntil: 0 };
@@ -731,6 +730,200 @@ app.delete('/api/admin/inquiries/:id', requireAdminAuth, (req: AuthenticatedRequ
   }
 
   res.json({ success: true, message: 'Inquiry deleted successfully.' });
+});
+
+// POST /api/admin/inquiries/bulk-delete (Bulk delete selected leads)
+app.post('/api/admin/inquiries/bulk-delete', requireAdminAuth, (req: AuthenticatedRequest, res: Response) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, message: 'No inquiry IDs provided.' });
+  }
+
+  const deletedCount = db.bulkDeleteInquiries(ids);
+  db.logAudit({
+    adminEmail: req.adminUser?.email || 'admin',
+    action: 'INQUIRIES_BULK_DELETED',
+    targetType: 'INQUIRY',
+    details: `Batch deleted ${deletedCount} inquiries.`
+  });
+
+  res.json({ success: true, message: `Successfully deleted ${deletedCount} inquiries.`, deletedCount });
+});
+
+// POST /api/admin/inquiries/bulk-status (Bulk update status of selected leads)
+app.post('/api/admin/inquiries/bulk-status', requireAdminAuth, (req: AuthenticatedRequest, res: Response) => {
+  const { ids, status } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0 || !status) {
+    return res.status(400).json({ success: false, message: 'Inquiry IDs array and target status are required.' });
+  }
+
+  const updatedCount = db.bulkUpdateInquiryStatus(ids, status);
+  db.logAudit({
+    adminEmail: req.adminUser?.email || 'admin',
+    action: 'INQUIRIES_BULK_STATUS_UPDATED',
+    targetType: 'INQUIRY',
+    details: `Batch updated status of ${updatedCount} inquiries to ${status}.`
+  });
+
+  res.json({ success: true, message: `Successfully updated ${updatedCount} inquiries to ${status}.`, updatedCount });
+});
+
+// POST /api/admin/inquiries/manual-lead (Create direct inquiry lead from admin panel)
+app.post('/api/admin/inquiries/manual-lead', requireAdminAuth, (req: AuthenticatedRequest, res: Response) => {
+  const {
+    fullName,
+    companyName,
+    email,
+    whatsapp,
+    country,
+    service,
+    industry,
+    businessDescription,
+    problem,
+    requirements,
+    timeline,
+    budget,
+    preferredContact
+  } = req.body;
+
+  if (!fullName || !companyName || !email) {
+    return res.status(400).json({ success: false, message: 'Full Name, Company, and Email are required.' });
+  }
+
+  const newInquiry = db.createInquiry({
+    fullName: fullName.trim(),
+    companyName: companyName.trim(),
+    email: email.trim(),
+    whatsapp: (whatsapp || '').trim(),
+    country: country ? country.trim() : 'United States',
+    service: service || 'AI Agents',
+    industry: industry ? industry.trim() : 'Technology',
+    businessDescription: businessDescription ? businessDescription.trim() : '',
+    problem: problem ? problem.trim() : 'Direct consultation request',
+    requirements: requirements ? requirements.trim() : 'Direct client acquisition via Admin Portal',
+    timeline: timeline || 'Within 2-4 Weeks',
+    budget: budget || '$5,000 - $10,000',
+    preferredContact: preferredContact || 'WhatsApp'
+  });
+
+  db.logAudit({
+    adminEmail: req.adminUser?.email || 'admin',
+    action: 'MANUAL_LEAD_CREATED',
+    targetType: 'INQUIRY',
+    targetId: newInquiry.inquiryId,
+    details: `Direct lead created for ${newInquiry.fullName} (${newInquiry.companyName}).`
+  });
+
+  res.json({ success: true, data: newInquiry });
+});
+
+// POST /api/admin/upload-logo (Upload new logo and update public/logo.jpg)
+app.post('/api/admin/upload-logo', requireAdminAuth, (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { fileData, fileName } = req.body;
+    if (!fileData) {
+      return res.status(400).json({ success: false, message: 'Logo image data (base64) is required.' });
+    }
+
+    const base64Data = fileData.replace(/^data:image\/[^;]+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    const publicLogoPath = path.join(process.cwd(), 'public', 'logo.jpg');
+    fs.writeFileSync(publicLogoPath, buffer);
+
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    const timestampedName = `logo_${Date.now()}.jpg`;
+    fs.writeFileSync(path.join(uploadsDir, timestampedName), buffer);
+
+    db.logAudit({
+      adminEmail: req.adminUser?.email || 'admin',
+      action: 'BRAND_LOGO_UPDATED',
+      targetType: 'BRANDING',
+      details: 'Brand logo updated to public/logo.jpg successfully.'
+    });
+
+    res.json({
+      success: true,
+      message: 'Brand logo updated successfully!',
+      logoUrl: '/logo.jpg',
+      timestamp: Date.now()
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: `Failed to upload logo: ${err?.message || 'Server error'}` });
+  }
+});
+
+// POST /api/admin/system/flush-cache (Memory and database maintenance)
+app.post('/api/admin/system/flush-cache', requireAdminAuth, (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (global.gc) {
+      global.gc();
+    }
+    db.persist();
+
+    db.logAudit({
+      adminEmail: req.adminUser?.email || 'admin',
+      action: 'SYSTEM_CACHE_FLUSHED',
+      targetType: 'SYSTEM',
+      details: 'Server memory cache flushed and database records synced.'
+    });
+
+    const metrics = db.getServerMetrics();
+    res.json({
+      success: true,
+      message: 'System cache flushed and database synced successfully.',
+      serverMetrics: metrics
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: 'Failed to flush cache.' });
+  }
+});
+
+// GET /api/admin/system/diagnostics (Full system health diagnostics)
+app.get('/api/admin/system/diagnostics', requireAdminAuth, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const serverMetrics = db.getServerMetrics();
+    const mongoStatus = db.getMongoStatus();
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+    let totalUploads = 0;
+    let totalUploadSizeMb = 0;
+
+    if (fs.existsSync(uploadsDir)) {
+      const files = fs.readdirSync(uploadsDir);
+      totalUploads = files.length;
+      files.forEach(f => {
+        try {
+          const stat = fs.statSync(path.join(uploadsDir, f));
+          totalUploadSizeMb += stat.size / (1024 * 1024);
+        } catch (e) {}
+      });
+    }
+
+    res.json({
+      success: true,
+      diagnostics: {
+        server: serverMetrics,
+        database: mongoStatus,
+        inquiriesCount: db.getInquiries().length,
+        demosCount: db.getDemos(false).length,
+        servicesCount: db.getServices(false).length,
+        faqsCount: db.getFaqs(false).length,
+        auditLogsCount: db.getAuditLogs().length,
+        uploads: {
+          fileCount: totalUploads,
+          totalSizeMb: totalUploadSizeMb.toFixed(2)
+        },
+        nodeVersion: process.version,
+        environment: process.env.NODE_ENV || 'production',
+        currentTime: new Date().toISOString()
+      }
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: 'Failed to retrieve diagnostics.' });
+  }
 });
 
 // POST /api/admin/clear-inquiries (Clear all inquiries)

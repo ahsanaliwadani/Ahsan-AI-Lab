@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -516,6 +519,7 @@ class DatabaseService {
 
   constructor() {
     this.state = this.loadState();
+    this.syncAdminCredentialsWithEnv();
     this.initializeMongo().catch(err => {
       console.warn('[Database] MongoDB connection notice:', err?.message || err);
     });
@@ -688,7 +692,7 @@ class DatabaseService {
     }
   }
 
-  private persist() {
+  public persist() {
     this.saveStateToDisk(this.state);
 
     // Asynchronously sync to MongoDB if connected
@@ -816,6 +820,51 @@ class DatabaseService {
       }
     }
     return deleted;
+  }
+
+  public bulkDeleteInquiries(ids: string[]): number {
+    if (!Array.isArray(ids) || ids.length === 0) return 0;
+    const set = new Set(ids);
+    const initialLen = this.state.inquiries.length;
+    this.state.inquiries = this.state.inquiries.filter(i => !set.has(i._id) && !set.has(i.inquiryId));
+    const count = initialLen - this.state.inquiries.length;
+    if (count > 0) {
+      this.persist();
+      if (this.isMongoConnected && this.mongoDb) {
+        this.mongoDb.collection('inquiries').deleteMany({
+          $or: [
+            { _id: { $in: ids } },
+            { inquiryId: { $in: ids } }
+          ]
+        } as any).catch(() => {});
+      }
+    }
+    return count;
+  }
+
+  public bulkUpdateInquiryStatus(ids: string[], status: Inquiry['status']): number {
+    if (!Array.isArray(ids) || ids.length === 0) return 0;
+    const set = new Set(ids);
+    let count = 0;
+    const now = new Date().toISOString();
+    this.state.inquiries = this.state.inquiries.map(i => {
+      if (set.has(i._id) || set.has(i.inquiryId)) {
+        count++;
+        return { ...i, status, updatedAt: now };
+      }
+      return i;
+    });
+
+    if (count > 0) {
+      this.persist();
+      if (this.isMongoConnected && this.mongoDb) {
+        this.mongoDb.collection('inquiries').updateMany(
+          { $or: [{ _id: { $in: ids } }, { inquiryId: { $in: ids } }] as any },
+          { $set: { status, updatedAt: now } }
+        ).catch(() => {});
+      }
+    }
+    return count;
   }
 
   public clearAllInquiries(): number {
@@ -1022,6 +1071,93 @@ class DatabaseService {
   }
 
   // --- ADMIN AUTH & SECURITY ---
+  /**
+   * Automatically synchronizes admin credentials from .env whenever the application
+   * boots or environment variables are updated. Guarantees that ADMIN_EMAIL and
+   * ADMIN_PASSWORD set in .env are always active and effective immediately.
+   */
+  public syncAdminCredentialsWithEnv(): void {
+    const envEmail = process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.trim() : '';
+    const envPassword = process.env.ADMIN_PASSWORD;
+
+    if (!envEmail && !envPassword) return;
+
+    let admin = this.state.admins.find(a => a._id === 'admin_primary') || this.state.admins[0];
+
+    if (!admin) {
+      this.state.admins = this.getDefaultAdmins();
+      admin = this.state.admins[0];
+    }
+
+    let modified = false;
+
+    if (envEmail && admin.email.toLowerCase() !== envEmail.toLowerCase()) {
+      console.log(`[Database] Synchronizing admin email from environment: ${admin.email} -> ${envEmail}`);
+      admin.email = envEmail;
+      modified = true;
+    }
+
+    if (envPassword) {
+      const currentMatches = bcrypt.compareSync(envPassword, admin.passwordHash);
+      if (!currentMatches) {
+        console.log(`[Database] Synchronizing admin password hash from ADMIN_PASSWORD environment variable.`);
+        const salt = bcrypt.genSaltSync(10);
+        admin.passwordHash = bcrypt.hashSync(envPassword, salt);
+        modified = true;
+      }
+    }
+
+    if (modified) {
+      this.saveStateToDisk(this.state);
+      if (this.isMongoConnected && this.mongoDb) {
+        this.mongoDb.collection('admins').replaceOne(
+          { _id: admin._id as any },
+          { ...admin },
+          { upsert: true }
+        ).catch(err => console.warn('[Database] Mongo admin sync notice:', err));
+      }
+    }
+  }
+
+  /**
+   * Verifies admin credentials with multi-layer fallback.
+   * Matches against active database records and directly against ADMIN_PASSWORD / ADMIN_EMAIL
+   * environment variables with automatic self-healing synchronization.
+   */
+  public authenticateAdmin(email: string, plainPassword: string): (AdminUser & { passwordHash: string }) | null {
+    if (!email || !plainPassword) return null;
+    const cleanEmail = email.trim().toLowerCase();
+    const envEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    const envPassword = process.env.ADMIN_PASSWORD;
+
+    // 1. Direct environment match (failsafe & instant recovery)
+    if (envPassword && plainPassword === envPassword) {
+      if (!envEmail || cleanEmail === envEmail || this.state.admins.some(a => a.email.toLowerCase() === cleanEmail)) {
+        let admin = this.findAdminByEmail(cleanEmail) || this.state.admins[0];
+        if (admin) {
+          // Re-hash and synchronize database
+          if (!bcrypt.compareSync(plainPassword, admin.passwordHash)) {
+            const salt = bcrypt.genSaltSync(10);
+            admin.passwordHash = bcrypt.hashSync(plainPassword, salt);
+            if (cleanEmail && admin.email.toLowerCase() !== cleanEmail) {
+              admin.email = cleanEmail;
+            }
+            this.persist();
+          }
+          return admin;
+        }
+      }
+    }
+
+    // 2. Database hash verification
+    const admin = this.findAdminByEmail(cleanEmail);
+    if (admin && bcrypt.compareSync(plainPassword, admin.passwordHash)) {
+      return admin;
+    }
+
+    return null;
+  }
+
   public findAdminByEmail(email: string) {
     return this.state.admins.find(a => a.email.toLowerCase() === email.toLowerCase());
   }

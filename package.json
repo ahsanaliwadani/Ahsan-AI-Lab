@@ -9,6 +9,7 @@
     "start": "node dist/server.cjs",
     "clean": "rm -rf dist server.js",
     "optimize:assets": "node scripts/optimize-assets.js",
+    "reset-admin": "tsx scripts/reset-admin.ts",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

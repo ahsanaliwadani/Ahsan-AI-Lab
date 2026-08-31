@@ -58,7 +58,14 @@ import {
   Play,
   Film,
   Image as ImageIcon,
-  Loader2
+  Loader2,
+  Wand2,
+  ImagePlus,
+  Server,
+  HardDrive,
+  Gauge,
+  FileCode,
+  CheckCheck
 } from 'lucide-react';
 import { 
   AdminUser, 
@@ -127,6 +134,25 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [selectedInquiryIds, setSelectedInquiryIds] = useState<string[]>([]);
   const [copiedLeadSummary, setCopiedLeadSummary] = useState(false);
   const [isDownloadingBackup, setIsDownloadingBackup] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
+
+  // Smart WhatsApp Proposal State
+  const [showProposalModal, setShowProposalModal] = useState(false);
+  const [proposalInquiry, setProposalInquiry] = useState<Inquiry | null>(null);
+  const [proposalText, setProposalText] = useState('');
+  const [proposalCopied, setProposalCopied] = useState(false);
+
+  // Brand Logo Studio State
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [logoTimestamp, setLogoTimestamp] = useState(Date.now());
+  const [logoUploadMsg, setLogoUploadMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // System Health & Diagnostics State
+  const [diagnosticsData, setDiagnosticsData] = useState<any | null>(null);
+  const [isLoadingDiagnostics, setIsLoadingDiagnostics] = useState(false);
+  const [isFlushingCache, setIsFlushingCache] = useState(false);
+  const [flushCacheMsg, setFlushCacheMsg] = useState<string | null>(null);
 
   // Manual Lead Modal State
   const [showManualLeadModal, setShowManualLeadModal] = useState(false);
@@ -329,21 +355,152 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   // --- BULK STATUS CHANGE ---
   const handleBulkStatusChange = async (newStatus: InquiryStatus) => {
     if (selectedInquiryIds.length === 0) return;
+    setIsBulkUpdating(true);
     try {
-      await Promise.all(
-        selectedInquiryIds.map(id => 
-          fetch(`/api/admin/inquiries/${id}`, {
-            method: 'PATCH',
-            headers: authHeaders,
-            body: JSON.stringify({ status: newStatus })
-          })
-        )
-      );
-      setSelectedInquiryIds([]);
-      fetchAllData();
+      const res = await fetch('/api/admin/inquiries/bulk-status', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ ids: selectedInquiryIds, status: newStatus })
+      });
+      if (res.ok) {
+        setSelectedInquiryIds([]);
+        fetchAllData();
+      }
     } catch (err) {
       console.error('Failed to update bulk status:', err);
+    } finally {
+      setIsBulkUpdating(false);
     }
+  };
+
+  // --- BULK DELETE INQUIRIES ---
+  const handleBulkDeleteInquiries = async () => {
+    if (selectedInquiryIds.length === 0) return;
+    const confirmDelete = window.confirm(`Are you sure you want to permanently delete ${selectedInquiryIds.length} selected lead(s)?`);
+    if (!confirmDelete) return;
+
+    setIsBulkDeleting(true);
+    try {
+      const res = await fetch('/api/admin/inquiries/bulk-delete', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ ids: selectedInquiryIds })
+      });
+      if (res.ok) {
+        setSelectedInquiryIds([]);
+        fetchAllData();
+      }
+    } catch (err) {
+      console.error('Failed to bulk delete inquiries:', err);
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
+  // --- BRAND LOGO UPLOAD ---
+  const handleUploadLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setLogoUploadMsg({ type: 'error', text: 'Please select a valid image file (JPG, PNG, WebP, SVG).' });
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    setLogoUploadMsg(null);
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const fileData = reader.result as string;
+        const res = await fetch('/api/admin/upload-logo', {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify({ fileData, fileName: file.name })
+        });
+        const data = await res.json();
+        if (data.success) {
+          setLogoTimestamp(Date.now());
+          setLogoUploadMsg({ type: 'success', text: 'Brand logo updated successfully! Reloading system cache...' });
+          setTimeout(() => setLogoUploadMsg(null), 5000);
+        } else {
+          setLogoUploadMsg({ type: 'error', text: data.message || 'Failed to upload logo.' });
+        }
+      } catch (err: any) {
+        setLogoUploadMsg({ type: 'error', text: err?.message || 'Network error during logo upload.' });
+      } finally {
+        setIsUploadingLogo(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // --- SYSTEM DIAGNOSTICS & CACHE FLUSH ---
+  const handleLoadDiagnostics = async () => {
+    setIsLoadingDiagnostics(true);
+    try {
+      const res = await fetch('/api/admin/system/diagnostics', { headers: authHeaders });
+      if (res.ok) {
+        const data = await res.json();
+        setDiagnosticsData(data.diagnostics);
+      }
+    } catch (err) {
+      console.error('Failed to load diagnostics:', err);
+    } finally {
+      setIsLoadingDiagnostics(false);
+    }
+  };
+
+  const handleFlushCache = async () => {
+    setIsFlushingCache(true);
+    setFlushCacheMsg(null);
+    try {
+      const res = await fetch('/api/admin/system/flush-cache', {
+        method: 'POST',
+        headers: authHeaders
+      });
+      const data = await res.json();
+      if (data.success) {
+        setFlushCacheMsg('Cache purged and system memory synced successfully.');
+        fetchAllData();
+        setTimeout(() => setFlushCacheMsg(null), 4000);
+      }
+    } catch (err) {
+      setFlushCacheMsg('Failed to flush cache.');
+    } finally {
+      setIsFlushingCache(false);
+    }
+  };
+
+  // --- OPEN WHATSAPP PROPOSAL DRAFT ---
+  const handleOpenProposal = (inq: Inquiry) => {
+    setProposalInquiry(inq);
+    const clientName = inq.fullName.split(' ')[0] || inq.fullName;
+    const requirementsSummary = inq.requirements?.length > 150 
+      ? inq.requirements.slice(0, 150) + '...' 
+      : inq.requirements || 'tailored autonomous AI workflow systems';
+
+    const draft = `Hello ${clientName},
+
+Thank you for contacting AHSAN AI LABS regarding ${inq.service} for ${inq.companyName}.
+
+I have reviewed your core objective:
+"${requirementsSummary}"
+
+We have engineered autonomous enterprise architectures specifically for this use case. I would love to show you a live interactive demo and discuss how we can deploy this within your timeline (${inq.timeline}).
+
+When would be a convenient time for a quick 15-minute technical discovery call this week?
+
+Best regards,
+Ahsan Ali
+Founder & Principal AI Systems Architect
+AHSAN AI LABS | http://www.ahsanlab.qd.je
+WhatsApp: +92 344 6899742`;
+
+    setProposalText(draft);
+    setProposalCopied(false);
+    setShowProposalModal(true);
   };
 
   // --- SELECTION TOGGLES ---
@@ -1376,29 +1533,48 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
             {/* Bulk Selection Action Bar (appears when items selected) */}
             {selectedInquiryIds.length > 0 && (
-              <div className="p-3.5 rounded-2xl bg-blue-950/80 border border-blue-700/80 flex flex-wrap items-center justify-between gap-3 animate-in fade-in">
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-950 via-slate-900 to-purple-950 border border-blue-600/80 shadow-lg shadow-blue-900/30 flex flex-wrap items-center justify-between gap-3 animate-in fade-in">
                 <div className="flex items-center space-x-2 text-xs text-blue-200">
                   <CheckSquare className="w-4 h-4 text-cyan-400" />
-                  <span className="font-bold">{selectedInquiryIds.length}</span> leads selected
+                  <span className="font-bold text-white font-mono">{selectedInquiryIds.length}</span> lead(s) selected
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className="text-slate-400 text-[11px]">Mark as:</span>
-                  {(['CONTACTED', 'DISCUSSING', 'IN_PROGRESS', 'COMPLETED'] as InquiryStatus[]).map((st) => (
+                  <span className="text-slate-400 text-[11px]">Set Pipeline:</span>
+                  {(['CONTACTED', 'DISCUSSING', 'IN_PROGRESS', 'COMPLETED', 'CLOSED'] as InquiryStatus[]).map((st) => (
                     <button
                       key={st}
                       onClick={() => handleBulkStatusChange(st)}
+                      disabled={isBulkUpdating}
                       className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-blue-600 text-slate-200 text-[11px] font-bold border border-slate-700 transition-colors"
                     >
                       {st}
                     </button>
                   ))}
+
                   <button
                     onClick={handleBulkExportCsv}
-                    className="px-3 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-[11px] font-bold flex items-center space-x-1 ml-2"
+                    className="px-3 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-[11px] font-bold flex items-center space-x-1 ml-1 transition-colors"
                   >
                     <Download className="w-3 h-3" />
-                    <span>Export Selected</span>
+                    <span>CSV Export</span>
+                  </button>
+
+                  <button
+                    onClick={handleBulkDeleteInquiries}
+                    disabled={isBulkDeleting}
+                    className="px-3 py-1 rounded-lg bg-red-900/80 hover:bg-red-700 text-red-100 text-[11px] font-bold flex items-center space-x-1 border border-red-700 transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>{isBulkDeleting ? 'Deleting...' : 'Delete Selected'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => setSelectedInquiryIds([])}
+                    className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px]"
+                    title="Clear Selection"
+                  >
+                    Clear
                   </button>
                 </div>
               </div>
@@ -1498,6 +1674,14 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2.5">
+                    <button
+                      onClick={() => handleOpenProposal(selectedInquiry)}
+                      className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center space-x-1.5 shadow-md shadow-purple-600/30 transition-all"
+                    >
+                      <Wand2 className="w-3.5 h-3.5 text-yellow-300" />
+                      <span>Smart Proposal Draft</span>
+                    </button>
+
                     <a
                       href={`https://wa.me/${selectedInquiry.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello ${selectedInquiry.fullName}, Ahsan from AHSAN AI LABS here regarding your inquiry for ${selectedInquiry.service}. Let's discuss your requirements and schedule a discovery call.`)}`}
                       target="_blank"
@@ -1774,8 +1958,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                             </td>
                             <td className="py-3.5 text-right space-x-2">
                               <button
+                                onClick={() => handleOpenProposal(inq)}
+                                className="px-2.5 py-1 rounded-lg bg-purple-950 hover:bg-purple-900 text-purple-300 text-xs font-semibold border border-purple-800 transition-colors inline-flex items-center space-x-1"
+                                title="Draft Smart WhatsApp Proposal"
+                              >
+                                <Wand2 className="w-3 h-3 text-yellow-300" />
+                                <span className="hidden sm:inline">Proposal</span>
+                              </button>
+                              <button
                                 onClick={() => setSelectedInquiry(inq)}
-                                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs"
+                                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-colors"
                               >
                                 Manage
                               </button>
@@ -2773,20 +2965,154 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               </div>
             )}
 
-            {/* Database Backup & Export Card */}
-            <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-4 text-xs">
-              <div className="flex items-center space-x-2 text-cyan-400 font-bold uppercase tracking-wider text-xs">
-                <Database className="w-4 h-4" />
-                <span>Database Snapshot & Backup</span>
+            {/* BRAND LOGO & FAVICON STUDIO */}
+            <div className="p-6 rounded-3xl bg-slate-900/80 border border-blue-900/60 space-y-4 text-xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 text-cyan-400 font-bold uppercase tracking-wider text-xs">
+                  <ImagePlus className="w-4 h-4 text-blue-400" />
+                  <span>Brand Logo & Favicon Studio</span>
+                </div>
+                <span className="px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800 text-[10px] font-mono">
+                  Target: /logo.jpg
+                </span>
               </div>
-              <p className="text-slate-300">
-                Generate an immediate JSON snapshot of all inquiries, services, demos, FAQs, content, and settings.
+
+              <p className="text-slate-300 text-xs leading-relaxed">
+                Directly manage the primary brand logo displayed across the Navbar, Footer, Browser Favicon, and OpenGraph social embeds.
               </p>
-              <div className="flex flex-wrap gap-3">
+
+              {logoUploadMsg && (
+                <div className={`p-3 rounded-xl text-xs ${
+                  logoUploadMsg.type === 'success' 
+                    ? 'bg-emerald-950/90 text-emerald-300 border border-emerald-700' 
+                    : 'bg-red-950/90 text-red-300 border border-red-700'
+                }`}>
+                  {logoUploadMsg.text}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center p-4 rounded-2xl bg-slate-950 border border-slate-800">
+                {/* Logo Preview */}
+                <div className="md:col-span-4 flex flex-col items-center justify-center p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden bg-slate-950 border-2 border-cyan-500/40 p-1 flex items-center justify-center shadow-lg shadow-cyan-500/10 relative group">
+                    <img 
+                      src={`/logo.jpg?t=${logoTimestamp}`} 
+                      alt="Brand Logo" 
+                      className="w-full h-full object-contain rounded-xl"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/logo.jpg';
+                      }}
+                    />
+                    {isUploadingLogo && (
+                      <div className="absolute inset-0 bg-black/70 flex items-center justify-center rounded-xl">
+                        <RefreshCw className="w-6 h-6 text-cyan-400 animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-slate-400 font-mono text-center">
+                    Active Brand Logo
+                  </div>
+                </div>
+
+                {/* Upload & Actions */}
+                <div className="md:col-span-8 space-y-3">
+                  <div>
+                    <label className="text-slate-200 font-bold block mb-1">
+                      Upload New Brand Logo
+                    </label>
+                    <p className="text-[11px] text-slate-400 mb-3">
+                      Recommended: High-resolution Square image (512x512 JPG or PNG). Will automatically update site logo, favicon, and social embeds.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold cursor-pointer flex items-center space-x-2 text-xs shadow-md shadow-blue-600/30 transition-colors">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>{isUploadingLogo ? 'Processing Image...' : 'Choose File & Replace Logo'}</span>
+                      <input 
+                        type="file" 
+                        accept="image/jpeg,image/png,image/webp,image/svg+xml" 
+                        onChange={handleUploadLogo}
+                        disabled={isUploadingLogo}
+                        className="hidden" 
+                      />
+                    </label>
+
+                    <a 
+                      href={`/logo.jpg?t=${logoTimestamp}`} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center space-x-1.5 border border-slate-700 transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Open Logo in New Tab</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SERVER HEALTH DIAGNOSTICS & SYSTEM MAINTENANCE */}
+            <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-4 text-xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 text-cyan-400 font-bold uppercase tracking-wider text-xs">
+                  <Server className="w-4 h-4 text-emerald-400" />
+                  <span>Server Diagnostics & Storage Maintenance</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLoadDiagnostics}
+                  disabled={isLoadingDiagnostics}
+                  className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold flex items-center space-x-1 border border-slate-700"
+                >
+                  <Gauge className={`w-3 h-3 ${isLoadingDiagnostics ? 'animate-spin' : ''}`} />
+                  <span>{isLoadingDiagnostics ? 'Inspecting...' : 'Refresh Diagnostics'}</span>
+                </button>
+              </div>
+
+              {flushCacheMsg && (
+                <div className="p-3 rounded-xl bg-emerald-950/90 text-emerald-300 border border-emerald-700 text-xs">
+                  {flushCacheMsg}
+                </div>
+              )}
+
+              {/* Diagnostics Grid */}
+              {diagnosticsData && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl bg-slate-950 border border-slate-800 animate-in fade-in">
+                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800/80">
+                    <div className="text-slate-500 text-[10px]">Node.js Runtime</div>
+                    <div className="font-mono font-bold text-white mt-0.5">{diagnosticsData.nodeVersion}</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800/80">
+                    <div className="text-slate-500 text-[10px]">Memory Used</div>
+                    <div className="font-mono font-bold text-cyan-400 mt-0.5">{diagnosticsData.server?.memory?.heapUsedMb || 0} MB</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800/80">
+                    <div className="text-slate-500 text-[10px]">Media Uploads</div>
+                    <div className="font-mono font-bold text-purple-400 mt-0.5">{diagnosticsData.uploads?.fileCount || 0} files ({diagnosticsData.uploads?.totalSizeMb || '0'} MB)</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800/80">
+                    <div className="text-slate-500 text-[10px]">Database Engine</div>
+                    <div className="font-mono font-bold text-emerald-400 mt-0.5">{diagnosticsData.database?.connected ? 'MongoDB + JSON' : 'JSON Atomic DB'}</div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleFlushCache}
+                  disabled={isFlushingCache}
+                  className="px-4 py-2 rounded-xl bg-blue-950 hover:bg-blue-900 text-cyan-300 font-semibold flex items-center space-x-1.5 border border-blue-800"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isFlushingCache ? 'animate-spin' : ''}`} />
+                  <span>Flush Memory Cache & Sync DB</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={handleExportDatabaseJson}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold flex items-center space-x-1.5"
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold flex items-center space-x-1.5 border border-slate-700"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Download Full JSON Backup</span>
@@ -3291,6 +3617,93 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* SMART WHATSAPP PROPOSAL MODAL */}
+      {showProposalModal && proposalInquiry && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in overflow-y-auto">
+          <div className="w-full max-w-xl bg-slate-900 border border-purple-800/80 rounded-2xl p-6 space-y-4 shadow-2xl my-8 animate-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center space-x-2 text-white font-bold text-sm">
+                <Wand2 className="w-4 h-4 text-purple-400" />
+                <span>Smart WhatsApp Proposal Generator</span>
+              </div>
+              <button
+                onClick={() => setShowProposalModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between p-3 rounded-xl bg-purple-950/40 border border-purple-900/60 text-xs">
+              <div>
+                <div className="text-white font-bold">{proposalInquiry.fullName}</div>
+                <div className="text-purple-300 text-[11px]">{proposalInquiry.companyName} • {proposalInquiry.service}</div>
+              </div>
+              <div className="text-right font-mono text-emerald-400 font-bold">
+                {proposalInquiry.budget || 'Custom Budget'}
+              </div>
+            </div>
+
+            <div className="space-y-1 text-xs">
+              <div className="flex items-center justify-between">
+                <label className="text-slate-300 font-medium">Editable Outreach Pitch / Proposal Message:</label>
+                <span className="text-[10px] text-slate-500">Auto-tailored to client's requirements</span>
+              </div>
+              <textarea
+                rows={10}
+                value={proposalText}
+                onChange={(e) => setProposalText(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-purple-900/60 text-slate-200 font-mono text-xs leading-relaxed resize-none focus:outline-none focus:border-purple-500"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(proposalText);
+                  setProposalCopied(true);
+                  setTimeout(() => setProposalCopied(false), 3000);
+                }}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 border border-slate-700 transition-colors"
+              >
+                {proposalCopied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-emerald-400 font-bold">Copied to Clipboard!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy Proposal Text</span>
+                  </>
+                )}
+              </button>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setShowProposalModal(false)}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+                >
+                  Close
+                </button>
+                <a
+                  href={`https://wa.me/${proposalInquiry.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(proposalText)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/30 flex items-center space-x-1.5 transition-colors"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>Send via WhatsApp</span>
+                  <ArrowUpRight className="w-3 h-3" />
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       )}
