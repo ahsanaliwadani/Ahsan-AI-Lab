@@ -162,14 +162,56 @@ export const Footer: React.FC<FooterProps> = ({ settings, onNavigate, onSelectSe
               <div className="pt-2">
                 <div className="text-slate-400 text-xs mb-2">Connect with our brand:</div>
                 <div className="flex flex-wrap gap-2 text-xs">
-                  {['LinkedIn', 'X (Twitter)', 'Instagram', 'YouTube', 'Facebook'].map((soc) => (
-                    <span 
-                      key={soc} 
-                      className="px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-slate-300 hover:text-white cursor-pointer transition-colors"
+                  {settings?.socialLinks?.linkedin && (
+                    <a
+                      href={settings.socialLinks.linkedin}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-blue-500 transition-colors"
                     >
-                      {soc}
-                    </span>
-                  ))}
+                      LinkedIn
+                    </a>
+                  )}
+                  {settings?.socialLinks?.twitter && (
+                    <a
+                      href={settings.socialLinks.twitter}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-blue-400 transition-colors"
+                    >
+                      X (Twitter)
+                    </a>
+                  )}
+                  {settings?.socialLinks?.instagram && (
+                    <a
+                      href={settings.socialLinks.instagram}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-pink-500 transition-colors"
+                    >
+                      Instagram
+                    </a>
+                  )}
+                  {settings?.socialLinks?.youtube && (
+                    <a
+                      href={settings.socialLinks.youtube}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-red-500 transition-colors"
+                    >
+                      YouTube
+                    </a>
+                  )}
+                  {settings?.socialLinks?.facebook && (
+                    <a
+                      href={settings.socialLinks.facebook}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-blue-600 transition-colors"
+                    >
+                      Facebook
+                    </a>
+                  )}
                 </div>
               </div>
             </div>

@@ -150,6 +150,7 @@ export interface SiteSettings {
   companyName: string;
   tagline: string;
   logoText: string;
+  siteUrl?: string;
   primaryEmail: string;
   supportWhatsApp: string;
   whatsappDirectNumber: string;

@@ -9,8 +9,8 @@ interface AdminLoginProps {
 }
 
 export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onNavigateHome }) => {
-  const [email, setEmail] = useState('admin@ahsanailabs.com');
-  const [password, setPassword] = useState('admin_password_123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -58,16 +58,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onNaviga
           <div className="text-xs uppercase tracking-widest text-blue-400 font-semibold pt-1">
             Administrative Management Portal
           </div>
-        </div>
-
-        {/* Demo Credentials Quick Banner */}
-        <div className="p-3.5 rounded-2xl bg-blue-950/40 border border-blue-800/40 text-xs text-slate-300 space-y-1">
-          <div className="font-semibold text-cyan-300 flex items-center">
-            <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-            Default Administrator Credentials
-          </div>
-          <div>Email: <code className="bg-slate-900 px-1.5 py-0.5 rounded text-white">admin@ahsanailabs.com</code></div>
-          <div>Password: <code className="bg-slate-900 px-1.5 py-0.5 rounded text-white">admin_password_123</code></div>
         </div>
 
         {/* Login Box */}

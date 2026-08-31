@@ -14,5 +14,5 @@ Allow: /
 Disallow: /admin
 Disallow: /api/admin/
 
-Sitemap: https://ahsanailabs.com/sitemap.xml
+Sitemap: http://www.ahsanlab.qd.je/sitemap.xml
 

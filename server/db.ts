@@ -262,7 +262,7 @@ const initialDemos: DemoItem[] = [
     description: 'Walkthrough of an autonomous AI agent resolving a multi-tier technical support inquiry, verifying account permissions, and updating CRM records without human delay.',
     features: ['Contextual Memory', 'CRM Bi-directional Sync', 'Ticket Triage', 'Security Validation'],
     thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/watch?v=sPbc3GHcko0',
     duration: '03:45',
     clientIndustry: 'FinTech & B2B SaaS',
     keyImpact: '91% First-Contact Resolution Rate',
@@ -279,7 +279,7 @@ const initialDemos: DemoItem[] = [
     description: 'Demonstration of an ultra-low latency AI voice assistant handling an inbound patient call, verifying insurance eligibility, and booking an appointment into Google Calendar.',
     features: ['<400ms Response', 'Interruption Handling', 'EMR/Calendar Sync', 'Warm Voice Cadence'],
     thumbnail: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=1200&q=80',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/watch?v=o0_dC_uXG5g',
     duration: '04:12',
     clientIndustry: 'Healthcare & Wellness',
     keyImpact: 'Zero Missed After-Hours Calls',
@@ -296,7 +296,7 @@ const initialDemos: DemoItem[] = [
     description: 'Showcase of a customized website chatbot that qualifies high-net-worth real estate prospects, displays interactive property carousels, and sends an instant WhatsApp alert to the broker.',
     features: ['Knowledge Grounding', 'Budget Pre-qualification', 'Interactive Sliders', 'Instant SMS/WhatsApp Notification'],
     thumbnail: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1200&q=80',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/watch?v=zp1R3n3K99k',
     duration: '02:50',
     clientIndustry: 'Luxury Real Estate',
     keyImpact: '4.2x Increase in Lead Capture',
@@ -313,7 +313,7 @@ const initialDemos: DemoItem[] = [
     description: 'A deep dive into an n8n enterprise workflow that turns accepted client proposals into signed contracts, generates accounting invoices, and creates private client communication channels.',
     features: ['Multi-System Orchestration', 'DocuSign API', 'Stripe Billing', 'Automated Slack Room Creation'],
     thumbnail: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/watch?v=0h9bZg-sU1Y',
     duration: '05:15',
     clientIndustry: 'Legal & Management Consulting',
     keyImpact: 'Saved 28 Hours / Week',
@@ -330,7 +330,7 @@ const initialDemos: DemoItem[] = [
     description: 'Walkthrough of an automated WhatsApp Business customer flow featuring interactive quick-reply buttons, order tracking lookups, and instant receipt PDF generation.',
     features: ['WhatsApp Cloud API', 'Interactive Quick-Replies', 'Automated PDF Dispatch', 'Dynamic Language Switcher'],
     thumbnail: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=1200&q=80',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/watch?v=r_bN0Bf0UoM',
     duration: '03:10',
     clientIndustry: 'D2C Retail & Logistics',
     keyImpact: '98.4% Message Open Rate',
@@ -347,7 +347,7 @@ const initialDemos: DemoItem[] = [
     description: 'Demonstration of an autonomous market researcher agent that scrapes prospect company news, identifies pain points, and crafts bespoke, highly targeted outreach blueprints.',
     features: ['Live Web Extraction', 'Sentiment Analysis', 'Custom Draft Generation', 'CRM Enrichment'],
     thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/watch?v=e_wK50d6f4c',
     duration: '04:30',
     clientIndustry: 'B2B Professional Services',
     keyImpact: '140+ Hours Saved Monthly',
@@ -446,14 +446,13 @@ const initialContent: CompanyContent = {
     name: 'Ahsan Ali',
     title: 'Founder & Principal AI Systems Architect',
     bio: 'Ahsan Ali is an AI automation architect and engineer dedicated to helping forward-thinking enterprises bridge the gap between cutting-edge artificial intelligence and high-ROI business operations. With deep expertise across autonomous agents, telephony voice AI, and scalable API orchestration, Ahsan leads the engineering team at AHSAN AI LABS to deliver robust, enterprise-grade digital systems.',
-    photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80',
+    photoUrl: '/founder.jpg',
     quote: 'True business transformation happens when artificial intelligence moves from theoretical experiments into reliable, everyday autonomous execution.',
     socials: {
-      linkedin: 'https://linkedin.com',
-      twitter: 'https://x.com',
-      github: 'https://github.com',
+      linkedin: 'https://linkedin.com/in/ahsanali',
+      twitter: 'https://x.com/ahsanali',
       email: 'ahsan@ahsanailabs.com',
-      whatsapp: '+1234567890'
+      whatsapp: '+92 344 6899742'
     }
   },
   about: {
@@ -486,6 +485,7 @@ const initialSettings: SiteSettings = {
   companyName: 'AHSAN AI LABS',
   tagline: 'INTELLIGENCE. AUTOMATION. INNOVATION.',
   logoText: 'AHSAN AI LABS',
+  siteUrl: 'http://www.ahsanlab.qd.je',
   primaryEmail: 'contact@ahsanailabs.com',
   supportWhatsApp: '+1 (555) 019-8234',
   whatsappDirectNumber: '15550198234',
@@ -619,10 +619,10 @@ class DatabaseService {
           settings: parsed.settings || initialSettings,
           auditLogs: parsed.auditLogs || [],
           admins: parsed.admins || this.getDefaultAdmins(),
-          analyticsEvents: parsed.analyticsEvents && parsed.analyticsEvents.length > 0 ? parsed.analyticsEvents : this.generateSeedAnalytics(),
-          webVitals: parsed.webVitals && parsed.webVitals.length > 0 ? parsed.webVitals : this.generateSeedWebVitals(),
-          errorLogs: parsed.errorLogs || this.generateSeedErrorLogs(),
-          uptimeChecks: parsed.uptimeChecks && parsed.uptimeChecks.length > 0 ? parsed.uptimeChecks : this.generateSeedUptimeChecks(),
+          analyticsEvents: parsed.analyticsEvents || [],
+          webVitals: parsed.webVitals || [],
+          errorLogs: parsed.errorLogs || [],
+          uptimeChecks: parsed.uptimeChecks || [],
           systemAlerts: parsed.systemAlerts || []
         };
       }
@@ -648,10 +648,10 @@ class DatabaseService {
         }
       ],
       admins: this.getDefaultAdmins(),
-      analyticsEvents: this.generateSeedAnalytics(),
-      webVitals: this.generateSeedWebVitals(),
-      errorLogs: this.generateSeedErrorLogs(),
-      uptimeChecks: this.generateSeedUptimeChecks(),
+      analyticsEvents: [],
+      webVitals: [],
+      errorLogs: [],
+      uptimeChecks: [],
       systemAlerts: []
     };
 

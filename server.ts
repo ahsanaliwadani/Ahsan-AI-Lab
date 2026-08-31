@@ -1,8 +1,10 @@
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
+import fs from 'fs';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
+import compression from 'compression';
 import { createServer as createViteServer } from 'vite';
 import { db } from './server/db';
 import { AutomationEngine } from './server/automation';
@@ -13,27 +15,58 @@ const app = express();
 const PORT = 3000;
 const JWT_SECRET = process.env.ADMIN_SECRET || process.env.JWT_SECRET || 'ahsan_ai_labs_super_secure_jwt_secret_key_2026';
 
-// Security Headers Middleware
+// 1. High-Performance Gzip/Brotli Compression
+app.use(compression({
+  threshold: 1024, // only compress responses > 1KB
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  }
+}));
+
+// 2. Comprehensive Enterprise Security Headers
 app.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('X-Download-Options', 'noopen');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://fonts.googleapis.com https://fonts.gstatic.com https://images.unsplash.com https://images.pexels.com; img-src 'self' data: blob: https:; connect-src 'self' https:; font-src 'self' data: https://fonts.gstatic.com; media-src 'self' https: data: blob:; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.loom.com https:;"
+  );
+
   if (process.env.NODE_ENV === 'production') {
-    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   }
+
+  // Prevent caching of private API requests
+  if (req.path.startsWith('/api/')) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+
   next();
 });
 
-// Body Parser with strict limits
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// 3. Body Parser with 100mb payload limit for high-definition video uploads
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
-// Static public folder for robots.txt, sitemap.xml, favicon
+// 4. Static public folder with smart caching (1 day for media assets)
 const publicDir = path.join(process.cwd(), 'public');
-app.use(express.static(publicDir));
+app.use(express.static(publicDir, {
+  maxAge: '1d',
+  etag: true,
+  lastModified: true
+}));
 
-// In-memory rate limiter for public inquiry submissions
+// 5. In-memory rate limiter for public inquiry submissions
 const submissionRateMap = new Map<string, { count: number; firstAttempt: number }>();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const MAX_SUBMISSIONS_PER_MIN = 5;
@@ -59,6 +92,27 @@ const inquiryRateLimiter = (req: Request, res: Response, next: NextFunction) => 
   next();
 };
 
+// 6. Dedicated Admin Login Brute-Force Protection Rate Limiter
+const loginAttemptsMap = new Map<string, { attempts: number; lockUntil: number }>();
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOGIN_LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes lockout
+
+const loginBruteForceProtector = (req: Request, res: Response, next: NextFunction) => {
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const record = loginAttemptsMap.get(ip);
+
+  if (record && record.lockUntil > now) {
+    const remainingMins = Math.ceil((record.lockUntil - now) / 60000);
+    return res.status(429).json({
+      success: false,
+      message: `Account protection active. Too many failed attempts. Please try again in ${remainingMins} minute${remainingMins > 1 ? 's' : ''}.`
+    });
+  }
+
+  next();
+};
+
 // Latency and Performance Telemetry Middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
   const start = Date.now();
@@ -77,6 +131,12 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   });
   next();
 });
+
+// Serve uploaded media (videos, thumbnails) with streaming support
+app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads'), {
+  acceptRanges: true,
+  maxAge: '1d'
+}));
 
 // Admin Authentication Middleware
 export interface AuthenticatedRequest extends Request {
@@ -418,22 +478,47 @@ app.post('/api/inquiries', inquiryRateLimiter, async (req: Request, res: Respons
 // ==========================================
 
 // POST /api/admin/login
-app.post('/api/admin/login', (req: Request, res: Response) => {
+app.post('/api/admin/login', loginBruteForceProtector, (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    const email = typeof req.body.email === 'string' ? req.body.email.trim() : '';
+    const password = typeof req.body.password === 'string' ? req.body.password : '';
+
     if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Email and password are required.' });
     }
 
     const admin = db.findAdminByEmail(email);
-    if (!admin) {
-      return res.status(401).json({ success: false, message: 'Invalid administrative credentials.' });
+    const passwordMatches = admin ? bcrypt.compareSync(password, admin.passwordHash) : false;
+
+    if (!admin || !passwordMatches) {
+      // Record failed attempt for rate limiting
+      const now = Date.now();
+      const current = loginAttemptsMap.get(ip) || { attempts: 0, lockUntil: 0 };
+      current.attempts += 1;
+      if (current.attempts >= MAX_LOGIN_ATTEMPTS) {
+        current.lockUntil = now + LOGIN_LOCK_DURATION_MS;
+      }
+      loginAttemptsMap.set(ip, current);
+
+      db.logAudit({
+        adminEmail: email || 'unknown',
+        action: 'ADMIN_LOGIN_FAILED',
+        targetType: 'AUTH',
+        details: `Failed authentication attempt (attempt ${current.attempts} of ${MAX_LOGIN_ATTEMPTS}) from IP ${ip}`,
+        ip
+      });
+
+      const remainingAttempts = Math.max(0, MAX_LOGIN_ATTEMPTS - current.attempts);
+      const message = current.attempts >= MAX_LOGIN_ATTEMPTS
+        ? 'Account temporarily locked due to 5 consecutive failed attempts. Please try again after 15 minutes.'
+        : `Invalid administrative credentials. (${remainingAttempts} attempt${remainingAttempts === 1 ? '' : 's'} remaining)`;
+
+      return res.status(401).json({ success: false, message });
     }
 
-    const passwordMatches = bcrypt.compareSync(password, admin.passwordHash);
-    if (!passwordMatches) {
-      return res.status(401).json({ success: false, message: 'Invalid administrative credentials.' });
-    }
+    // Success: clear failed attempts
+    loginAttemptsMap.delete(ip);
 
     // Update last login
     db.updateAdminLastLogin(admin._id);
@@ -451,10 +536,10 @@ app.post('/api/admin/login', (req: Request, res: Response) => {
 
     db.logAudit({
       adminEmail: admin.email,
-      action: 'ADMIN_LOGIN',
+      action: 'ADMIN_LOGIN_SUCCESS',
       targetType: 'AUTH',
-      details: `Admin ${admin.name} successfully authenticated.`,
-      ip: req.ip
+      details: `Admin ${admin.name} (${admin.email}) successfully authenticated.`,
+      ip
     });
 
     res.json({
@@ -826,6 +911,64 @@ app.delete('/api/admin/demos/:id', requireAdminAuth, (req: AuthenticatedRequest,
   res.json({ success: true, message: 'Demo deleted.' });
 });
 
+// POST /api/admin/upload-media (Upload demo videos, images, attachments)
+app.post('/api/admin/upload-media', requireAdminAuth, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { fileName, fileData, fileType } = req.body;
+    if (!fileName || !fileData) {
+      return res.status(400).json({ success: false, message: 'fileName and fileData (base64 string) are required.' });
+    }
+
+    // Sanitize extension
+    const extMatch = fileName.match(/\.([a-zA-Z0-9]+)$/);
+    const ext = extMatch ? extMatch[1].toLowerCase() : 'mp4';
+    const allowedExts = ['mp4', 'webm', 'mov', 'm4v', 'ogg', 'png', 'jpg', 'jpeg', 'webp', 'svg', 'gif'];
+    if (!allowedExts.includes(ext)) {
+      return res.status(400).json({
+        success: false,
+        message: `File format .${ext} is not permitted. Allowed formats: ${allowedExts.join(', ')}`
+      });
+    }
+
+    // Clean base64 header if present (e.g. data:video/mp4;base64,...)
+    const base64Data = fileData.replace(/^data:[^;]+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    // Create uploads directory if not exists
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    // Create safe unique filename
+    const safeBaseName = fileName.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 40);
+    const uniqueFileName = `media_${Date.now()}_${safeBaseName}.${ext}`;
+    const targetFilePath = path.join(uploadsDir, uniqueFileName);
+
+    fs.writeFileSync(targetFilePath, buffer);
+
+    const publicUrl = `/uploads/${uniqueFileName}`;
+
+    db.logAudit({
+      adminEmail: req.adminUser?.email || 'admin',
+      action: 'MEDIA_UPLOADED',
+      targetType: 'MEDIA',
+      targetId: uniqueFileName,
+      details: `Admin uploaded media asset "${uniqueFileName}" (${(buffer.length / (1024 * 1024)).toFixed(2)} MB).`
+    });
+
+    res.json({
+      success: true,
+      url: publicUrl,
+      fileName: uniqueFileName,
+      sizeBytes: buffer.length,
+      sizeMb: (buffer.length / (1024 * 1024)).toFixed(2)
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: `Upload failed: ${err?.message || 'Server error'}` });
+  }
+});
+
 // ==========================================
 // ADMIN FAQS CMS
 // ==========================================
@@ -1149,8 +1292,21 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
+    // Serve static assets with 1 year cache for hashed assets and 1 day for others
+    app.use(express.static(distPath, {
+      maxAge: '1y',
+      etag: true,
+      lastModified: true,
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+        } else if (filePath.includes('/assets/')) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        }
+      }
+    }));
     app.get('*', (req: Request, res: Response) => {
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate');
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }

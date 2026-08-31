@@ -53,7 +53,12 @@ import {
   CheckSquare,
   Square,
   Archive,
-  ArrowUpRight
+  ArrowUpRight,
+  Upload,
+  Play,
+  Film,
+  Image as ImageIcon,
+  Loader2
 } from 'lucide-react';
 import { 
   AdminUser, 
@@ -70,6 +75,8 @@ import {
 } from '../../types';
 import { AnalyticsMonitoringView } from './analytics/AnalyticsMonitoringView';
 import { BrandLogo } from '../../components/BrandLogo';
+import { VideoModal } from '../../components/VideoModal';
+import { parseVideoUrl } from '../../utils/video';
 
 interface AdminPortalProps {
   token: string;
@@ -143,6 +150,15 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [editingService, setEditingService] = useState<Partial<ServiceItem> | null>(null);
   const [editingDemo, setEditingDemo] = useState<Partial<DemoItem> | null>(null);
   const [editingFaq, setEditingFaq] = useState<Partial<FAQItem> | null>(null);
+
+  // Demo CMS Upload & Management State
+  const [uploadingDemoVideo, setUploadingDemoVideo] = useState(false);
+  const [uploadingDemoThumb, setUploadingDemoThumb] = useState(false);
+  const [demoUploadStatus, setDemoUploadStatus] = useState<string | null>(null);
+  const [featureTagInput, setFeatureTagInput] = useState('');
+  const [previewingDemo, setPreviewingDemo] = useState<DemoItem | null>(null);
+  const [demoSearchFilter, setDemoSearchFilter] = useState('');
+  const [demoCategoryFilter, setDemoCategoryFilter] = useState('ALL');
 
   // Change Password Modal
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -631,6 +647,80 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   };
 
   // --- DEMO CMS ACTIONS ---
+  const handleUploadDemoMedia = async (file: File, type: 'video' | 'thumbnail') => {
+    if (!file) return;
+
+    if (type === 'video') {
+      setUploadingDemoVideo(true);
+      setDemoUploadStatus(`Uploading ${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)...`);
+    } else {
+      setUploadingDemoThumb(true);
+    }
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64Data = reader.result as string;
+        try {
+          const res = await fetch('/api/admin/upload-media', {
+            method: 'POST',
+            headers: authHeaders,
+            body: JSON.stringify({
+              fileName: file.name,
+              fileData: base64Data,
+              fileType: file.type
+            })
+          });
+
+          const data = await res.json();
+          if (data.success && data.url) {
+            if (type === 'video') {
+              setEditingDemo(prev => prev ? ({ ...prev, videoUrl: data.url }) : null);
+              setDemoUploadStatus(`Successfully uploaded: ${data.url} (${data.sizeMb} MB)`);
+            } else {
+              setEditingDemo(prev => prev ? ({ ...prev, thumbnail: data.url }) : null);
+            }
+          } else {
+            alert(`Upload error: ${data.message || 'Failed to upload'}`);
+            if (type === 'video') setDemoUploadStatus(null);
+          }
+        } catch (err: any) {
+          alert(`Network error during upload: ${err?.message || err}`);
+          if (type === 'video') setDemoUploadStatus(null);
+        } finally {
+          setUploadingDemoVideo(false);
+          setUploadingDemoThumb(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      alert(`Could not process file: ${err?.message || err}`);
+      setUploadingDemoVideo(false);
+      setUploadingDemoThumb(false);
+      setDemoUploadStatus(null);
+    }
+  };
+
+  const handleAddFeatureTag = () => {
+    if (!featureTagInput.trim() || !editingDemo) return;
+    const currentFeatures = editingDemo.features || [];
+    if (!currentFeatures.includes(featureTagInput.trim())) {
+      setEditingDemo({
+        ...editingDemo,
+        features: [...currentFeatures, featureTagInput.trim()]
+      });
+    }
+    setFeatureTagInput('');
+  };
+
+  const handleRemoveFeatureTag = (tagToRemove: string) => {
+    if (!editingDemo) return;
+    setEditingDemo({
+      ...editingDemo,
+      features: (editingDemo.features || []).filter(f => f !== tagToRemove)
+    });
+  };
+
   const handleSaveDemo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingDemo || !editingDemo.title) return;
@@ -1809,52 +1899,109 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         {/* 4. DEMOS CMS TAB */}
         {currentTab === 'demos' && (
           <div className="space-y-6 animate-in fade-in duration-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                Showcase Video & Demo CMS ({demos.length})
-              </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+                  <Film className="w-4 h-4 text-blue-400" />
+                  <span>Showcase Video & Interactive Demos CMS ({demos.length})</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Upload video files (.mp4, .webm) or link YouTube, Vimeo & Loom embeds directly to your live portfolio.
+                </p>
+              </div>
               <button
-                onClick={() => setEditingDemo({
-                  title: '',
-                  category: 'AI AGENTS',
-                  description: '',
-                  features: [],
-                  published: true,
-                  displayOrder: demos.length + 1
-                })}
-                className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center space-x-1.5"
+                onClick={() => {
+                  setEditingDemo({
+                    title: '',
+                    category: 'AI AGENTS',
+                    description: '',
+                    features: [],
+                    thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
+                    videoUrl: '',
+                    duration: '03:30',
+                    clientIndustry: 'Enterprise Technology',
+                    keyImpact: 'Automated Operations',
+                    published: true,
+                    featured: true,
+                    displayOrder: demos.length + 1
+                  });
+                  setDemoUploadStatus(null);
+                }}
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center space-x-1.5 shadow-lg shadow-blue-600/30 shrink-0"
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Demo</span>
+                <Plus className="w-4 h-4" />
+                <span>Add Showcase Demo</span>
               </button>
             </div>
 
+            {/* Filter & Search Bar */}
+            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between p-3 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs">
+              <div className="relative w-full sm:w-80">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Search demos by title, industry, impact..."
+                  value={demoSearchFilter}
+                  onChange={(e) => setDemoSearchFilter(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-1.5 w-full sm:w-auto">
+                {['ALL', 'AI AGENTS', 'AI VOICE AGENTS', 'AI CHATBOTS', 'BUSINESS AUTOMATION', 'WHATSAPP AUTOMATION'].map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setDemoCategoryFilter(cat)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
+                      demoCategoryFilter === cat 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-slate-800/80 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* EDIT / CREATE DEMO MODAL FORM */}
             {editingDemo && (
-              <form onSubmit={handleSaveDemo} className="p-6 rounded-3xl bg-slate-900 border border-blue-900 space-y-4 text-xs">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                  <h4 className="font-bold text-white text-sm">
-                    {editingDemo._id ? 'Edit Showcase Demo' : 'Create Showcase Demo'}
-                  </h4>
-                  <button type="button" onClick={() => setEditingDemo(null)} className="text-slate-400 hover:text-white">✕</button>
+              <form onSubmit={handleSaveDemo} className="p-6 rounded-3xl bg-slate-900 border border-blue-600/60 shadow-2xl space-y-5 text-xs">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                  <div className="flex items-center space-x-2">
+                    <Film className="w-4 h-4 text-cyan-400" />
+                    <h4 className="font-bold text-white text-sm">
+                      {editingDemo._id ? `Edit Showcase Demo (${editingDemo.title || 'Untitled'})` : 'Create New Showcase Video Demo'}
+                    </h4>
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => { setEditingDemo(null); setDemoUploadStatus(null); }} 
+                    className="p-1 rounded-lg bg-slate-800 text-slate-400 hover:text-white"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-slate-300 font-medium">Demo Title</label>
+                    <label className="text-slate-300 font-medium">Demo Title *</label>
                     <input
                       type="text"
                       required
+                      placeholder="e.g. Autonomous Enterprise Support & CRM Agent"
                       value={editingDemo.title || ''}
                       onChange={(e) => setEditingDemo({ ...editingDemo, title: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-blue-500"
                     />
                   </div>
+
                   <div className="space-y-1">
-                    <label className="text-slate-300 font-medium">Category</label>
+                    <label className="text-slate-300 font-medium">AI Core Category *</label>
                     <select
                       value={editingDemo.category || 'AI AGENTS'}
                       onChange={(e) => setEditingDemo({ ...editingDemo, category: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-blue-500"
                     >
                       <option value="AI AGENTS">AI AGENTS</option>
                       <option value="AI VOICE AGENTS">AI VOICE AGENTS</option>
@@ -1866,47 +2013,469 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-slate-300 font-medium">Description</label>
+                  <label className="text-slate-300 font-medium">Demo Description</label>
                   <textarea
-                    rows={2}
+                    rows={3}
+                    placeholder="Provide a comprehensive summary of what this video demonstrates, the problems resolved, and architecture details..."
                     value={editingDemo.description || ''}
                     onChange={(e) => setEditingDemo({ ...editingDemo, description: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white resize-none"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white resize-none focus:border-blue-500"
                   />
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-2">
-                  <button type="button" onClick={() => setEditingDemo(null)} className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300">
+                {/* VIDEO UPLOAD & SOURCE SECTION */}
+                <div className="p-4 rounded-2xl bg-slate-950/80 border border-blue-900/50 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <div className="text-cyan-400 font-bold uppercase tracking-wider text-xs flex items-center space-x-1.5">
+                        <Video className="w-3.5 h-3.5" />
+                        <span>Demo Video Source & File Upload</span>
+                      </div>
+                      <p className="text-[11px] text-slate-400">
+                        Upload a video file from your computer OR paste a YouTube, Vimeo, Loom, or MP4 URL.
+                      </p>
+                    </div>
+
+                    {/* Direct Video File Upload Button */}
+                    <div className="shrink-0">
+                      <label className="cursor-pointer px-3.5 py-1.5 rounded-xl bg-cyan-950 hover:bg-cyan-900 border border-cyan-700 text-cyan-200 text-xs font-semibold flex items-center space-x-1.5 transition-colors">
+                        {uploadingDemoVideo ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                            <span>Uploading File...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Upload Video File (.mp4, .webm)</span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="video/mp4,video/webm,video/quicktime,video/x-m4v"
+                          className="hidden"
+                          disabled={uploadingDemoVideo}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleUploadDemoMedia(file, 'video');
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  {demoUploadStatus && (
+                    <div className="p-2.5 rounded-xl bg-slate-900 border border-cyan-800 text-cyan-300 text-xs flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        {uploadingDemoVideo ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        )}
+                        <span>{demoUploadStatus}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="text-slate-300 font-medium">Video Link / Embed URL / Upload Path</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="e.g. /uploads/video.mp4 OR https://www.youtube.com/watch?v=... OR https://vimeo.com/..."
+                        value={editingDemo.videoUrl || ''}
+                        onChange={(e) => setEditingDemo({ ...editingDemo, videoUrl: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-mono text-xs focus:border-cyan-500"
+                      />
+                      {editingDemo.videoUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewingDemo(editingDemo as DemoItem)}
+                          className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold flex items-center space-x-1 shrink-0"
+                          title="Preview full video player"
+                        >
+                          <Play className="w-3.5 h-3.5" />
+                          <span>Test</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px] text-slate-400">
+                      <span>Supported:</span>
+                      <span className="px-1.5 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800">YouTube</span>
+                      <span className="px-1.5 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800">Vimeo</span>
+                      <span className="px-1.5 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800">Loom</span>
+                      <span className="px-1.5 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800">Direct MP4 / WebM Upload</span>
+                    </div>
+                  </div>
+
+                  {/* LIVE PREVIEW EMBED IN FORM */}
+                  {editingDemo.videoUrl && (
+                    <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+                      <div className="text-[11px] font-semibold text-slate-300 flex items-center justify-between">
+                        <span>Live Video Preview:</span>
+                        <span className="text-[10px] text-cyan-400 font-mono">
+                          Source: {parseVideoUrl(editingDemo.videoUrl).type.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="relative aspect-video w-full max-w-lg rounded-xl overflow-hidden bg-black border border-slate-800">
+                        {parseVideoUrl(editingDemo.videoUrl).type === 'direct' ? (
+                          <video
+                            src={parseVideoUrl(editingDemo.videoUrl).embedUrl}
+                            controls
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <iframe
+                            src={parseVideoUrl(editingDemo.videoUrl).embedUrl}
+                            title="Preview"
+                            className="w-full h-full border-0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* THUMBNAIL & COVER IMAGE */}
+                <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="text-blue-400 font-bold uppercase tracking-wider text-xs flex items-center space-x-1.5">
+                      <ImageIcon className="w-3.5 h-3.5" />
+                      <span>Thumbnail & Cover Photo</span>
+                    </div>
+
+                    <label className="cursor-pointer px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 shrink-0 transition-colors">
+                      {uploadingDemoThumb ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Uploading Cover...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload Cover Image</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={uploadingDemoThumb}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadDemoMedia(file, 'thumbnail');
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                    <div className="sm:col-span-2 space-y-1">
+                      <label className="text-slate-300 font-medium">Cover Image URL</label>
+                      <input
+                        type="url"
+                        placeholder="https://images.unsplash.com/... or /uploads/cover.jpg"
+                        value={editingDemo.thumbnail || ''}
+                        onChange={(e) => setEditingDemo({ ...editingDemo, thumbnail: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-mono text-xs focus:border-blue-500"
+                      />
+                    </div>
+                    {editingDemo.thumbnail && (
+                      <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-900 border border-slate-800">
+                        <img
+                          src={editingDemo.thumbnail}
+                          alt="Cover preview"
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* METRICS & DETAILS */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">Duration (MM:SS)</label>
+                    <input
+                      type="text"
+                      placeholder="03:45"
+                      value={editingDemo.duration || ''}
+                      onChange={(e) => setEditingDemo({ ...editingDemo, duration: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">Client Industry</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Fintech & B2B SaaS"
+                      value={editingDemo.clientIndustry || ''}
+                      onChange={(e) => setEditingDemo({ ...editingDemo, clientIndustry: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">Key Impact Metric</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 91% First-Contact Resolution"
+                      value={editingDemo.keyImpact || ''}
+                      onChange={(e) => setEditingDemo({ ...editingDemo, keyImpact: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                    />
+                  </div>
+                </div>
+
+                {/* FEATURE TAGS */}
+                <div className="space-y-2">
+                  <label className="text-slate-300 font-medium">Demonstrated Features & Capabilities</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Type a capability (e.g. Contextual Memory, CRM Sync) and press Add..."
+                      value={featureTagInput}
+                      onChange={(e) => setFeatureTagInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddFeatureTag();
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddFeatureTag}
+                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold shrink-0"
+                    >
+                      Add Tag
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {(editingDemo.features || []).map((feat, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-blue-950/80 text-blue-300 border border-blue-800 text-xs"
+                      >
+                        <span>{feat}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFeatureTag(feat)}
+                          className="text-blue-400 hover:text-white"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                    {(editingDemo.features || []).length === 0 && (
+                      <span className="text-slate-500 text-[11px] italic">No feature tags added yet.</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* PUBLISHING CONTROLS */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-slate-800">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="demoPublished"
+                      checked={editingDemo.published ?? true}
+                      onChange={(e) => setEditingDemo({ ...editingDemo, published: e.target.checked })}
+                      className="w-4 h-4 rounded text-blue-600 bg-slate-950 border-slate-800 focus:ring-0"
+                    />
+                    <label htmlFor="demoPublished" className="text-slate-200 font-semibold cursor-pointer">
+                      Published on Website
+                    </label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="demoFeatured"
+                      checked={editingDemo.featured ?? false}
+                      onChange={(e) => setEditingDemo({ ...editingDemo, featured: e.target.checked })}
+                      className="w-4 h-4 rounded text-cyan-600 bg-slate-950 border-slate-800 focus:ring-0"
+                    />
+                    <label htmlFor="demoFeatured" className="text-slate-200 font-semibold cursor-pointer">
+                      Featured on Homepage
+                    </label>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-slate-400 text-[11px]">Display Order</label>
+                    <input
+                      type="number"
+                      value={editingDemo.displayOrder ?? 1}
+                      onChange={(e) => setEditingDemo({ ...editingDemo, displayOrder: parseInt(e.target.value) || 1 })}
+                      className="w-24 px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-3 border-t border-slate-800">
+                  <button 
+                    type="button" 
+                    onClick={() => { setEditingDemo(null); setDemoUploadStatus(null); }} 
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300"
+                  >
                     Cancel
                   </button>
-                  <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold">
-                    Save Demo
+                  <button 
+                    type="submit" 
+                    className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-600/30 flex items-center space-x-1.5"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>Save Showcase Demo</span>
                   </button>
                 </div>
               </form>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {demos.map((d) => (
-                <div key={d._id} className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 flex flex-col justify-between space-y-3 text-xs">
-                  <div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-950 text-blue-300 border border-blue-800">
-                      {d.category}
-                    </span>
-                    <div className="font-bold text-white mt-2">{d.title}</div>
-                    <p className="text-slate-400 mt-1 line-clamp-2">{d.description}</p>
+            {/* DEMOS LIST GRID */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {demos
+                .filter((d) => {
+                  const matchCat = demoCategoryFilter === 'ALL' || d.category === demoCategoryFilter;
+                  const matchSearch = !demoSearchFilter || 
+                    d.title.toLowerCase().includes(demoSearchFilter.toLowerCase()) ||
+                    (d.clientIndustry && d.clientIndustry.toLowerCase().includes(demoSearchFilter.toLowerCase())) ||
+                    (d.keyImpact && d.keyImpact.toLowerCase().includes(demoSearchFilter.toLowerCase()));
+                  return matchCat && matchSearch;
+                })
+                .map((d) => (
+                  <div 
+                    key={d._id} 
+                    className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between space-y-4 text-xs group"
+                  >
+                    <div className="space-y-3">
+                      {/* Video Thumbnail with Play Overlay */}
+                      <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
+                        {d.thumbnail ? (
+                          <img
+                            src={d.thumbnail}
+                            alt={d.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-slate-950 text-slate-600">
+                            <Film className="w-8 h-8" />
+                          </div>
+                        )}
+
+                        <div className="absolute inset-0 bg-slate-950/40 group-hover:bg-slate-950/20 transition-colors" />
+
+                        {/* Top Badges */}
+                        <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between">
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-950/90 text-blue-300 border border-blue-800 backdrop-blur-md">
+                            {d.category}
+                          </span>
+                          <div className="flex items-center space-x-1">
+                            {d.featured && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-950/90 text-amber-300 border border-amber-800">
+                                Featured
+                              </span>
+                            )}
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-950/90 text-slate-300 border border-slate-800">
+                              {d.duration || 'Video'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Play Button Overlay */}
+                        <button
+                          onClick={() => setPreviewingDemo(d)}
+                          className="absolute inset-0 flex items-center justify-center"
+                          title="Play Video"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-blue-600/90 hover:bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-600/40 group-hover:scale-110 transition-transform">
+                            <Play className="w-5 h-5 ml-0.5 fill-white" />
+                          </div>
+                        </button>
+                      </div>
+
+                      <div>
+                        <div className="font-bold text-white text-sm line-clamp-1 group-hover:text-blue-400 transition-colors">
+                          {d.title}
+                        </div>
+                        <p className="text-slate-400 mt-1 line-clamp-2 text-[11px]">
+                          {d.description}
+                        </p>
+                      </div>
+
+                      {/* Industry & Impact */}
+                      <div className="flex items-center justify-between text-[11px] pt-1 text-slate-300 font-medium">
+                        <span className="text-slate-400">{d.clientIndustry || 'Enterprise'}</span>
+                        <span className="text-cyan-400 font-bold">{d.keyImpact}</span>
+                      </div>
+
+                      {/* Feature Tags */}
+                      {d.features && d.features.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {d.features.slice(0, 3).map((feat, idx) => (
+                            <span key={idx} className="px-1.5 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800/80 text-[10px]">
+                              {feat}
+                            </span>
+                          ))}
+                          {d.features.length > 3 && (
+                            <span className="px-1 py-0.5 text-slate-500 text-[10px]">
+                              +{d.features.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+                      <button
+                        onClick={() => setPreviewingDemo(d)}
+                        className="px-2.5 py-1.5 rounded-lg bg-blue-950/80 hover:bg-blue-900 border border-blue-800 text-blue-300 font-semibold text-[11px] flex items-center space-x-1"
+                      >
+                        <Play className="w-3 h-3" />
+                        <span>Watch Demo</span>
+                      </button>
+
+                      <div className="flex items-center space-x-1.5">
+                        <button 
+                          onClick={() => {
+                            setEditingDemo(d);
+                            setDemoUploadStatus(null);
+                          }} 
+                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
+                          title="Edit Demo"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteDemo(d._id)} 
+                          className="p-1.5 rounded-lg bg-red-950/60 hover:bg-red-900/80 text-red-300 hover:text-red-200"
+                          title="Delete Demo"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-800">
-                    <button onClick={() => setEditingDemo(d)} className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
-                      <Edit className="w-3.5 h-3.5" />
-                    </button>
-                    <button onClick={() => handleDeleteDemo(d._id)} className="p-1.5 rounded-lg bg-red-950/60 text-red-300">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))}
             </div>
+
+            {demos.length === 0 && (
+              <div className="p-12 text-center rounded-3xl bg-slate-900/40 border border-slate-800 space-y-3">
+                <Film className="w-8 h-8 text-slate-600 mx-auto" />
+                <div className="text-white font-bold">No showcase demos created yet</div>
+                <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                  Click "Add Showcase Demo" to upload a video demo or link YouTube/Vimeo to demonstrate your AI systems.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -1998,11 +2567,59 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         {/* 6. CONTENT & FOUNDER CMS TAB */}
         {currentTab === 'content' && content && (
           <div className="space-y-6 animate-in fade-in duration-200">
-            <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-4 text-xs">
-              <h3 className="font-bold text-white text-sm uppercase tracking-wider text-blue-400">
-                Founder Profile & Bio Management (Ahsan Ali)
-              </h3>
+            <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-6 text-xs">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <h3 className="font-bold text-white text-sm uppercase tracking-wider text-blue-400">
+                  Founder Profile & Bio Management (Ahsan Ali)
+                </h3>
+                <span className="text-[11px] text-slate-400">Displayed on About & Public sections</span>
+              </div>
               
+              {/* Founder Photo Section */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-3">
+                <label className="text-slate-200 font-semibold flex items-center justify-between">
+                  <span>Founder Photo URL</span>
+                  <span className="text-[10px] text-cyan-400">Recommended: /founder.jpg</span>
+                </label>
+                
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                  <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-900 border border-slate-700 shrink-0 relative shadow-md">
+                    <img 
+                      src={content.founder?.photoUrl || '/founder.jpg'} 
+                      alt="Ahsan Ali Preview" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/founder.jpg';
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1 w-full space-y-2">
+                    <input
+                      type="text"
+                      value={content.founder?.photoUrl || ''}
+                      onChange={(e) => setContent({
+                        ...content,
+                        founder: { ...content.founder, photoUrl: e.target.value }
+                      })}
+                      placeholder="/founder.jpg or https://..."
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-mono text-xs"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setContent({
+                          ...content,
+                          founder: { ...content.founder, photoUrl: '/founder.jpg' }
+                        })}
+                        className="px-2.5 py-1 rounded-lg bg-blue-950 hover:bg-blue-900 text-cyan-300 border border-blue-800 text-[11px]"
+                      >
+                        Reset to Official Photo (/founder.jpg)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-slate-300 font-medium">Founder Name</label>
@@ -2056,6 +2673,79 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 />
               </div>
 
+              {/* Founder Social Profiles */}
+              <div className="space-y-3 pt-2 border-t border-slate-800">
+                <div className="text-cyan-400 font-bold uppercase tracking-wider text-xs">
+                  Founder Direct Social Links
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">LinkedIn URL</label>
+                    <input
+                      type="url"
+                      placeholder="https://linkedin.com/in/..."
+                      value={content.founder?.socials?.linkedin || ''}
+                      onChange={(e) => setContent({
+                        ...content,
+                        founder: {
+                          ...content.founder,
+                          socials: { ...content.founder?.socials, linkedin: e.target.value }
+                        }
+                      })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">Twitter / X URL</label>
+                    <input
+                      type="url"
+                      placeholder="https://x.com/..."
+                      value={content.founder?.socials?.twitter || ''}
+                      onChange={(e) => setContent({
+                        ...content,
+                        founder: {
+                          ...content.founder,
+                          socials: { ...content.founder?.socials, twitter: e.target.value }
+                        }
+                      })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">Email Address</label>
+                    <input
+                      type="email"
+                      placeholder="ahsan@ahsanailabs.com"
+                      value={content.founder?.socials?.email || ''}
+                      onChange={(e) => setContent({
+                        ...content,
+                        founder: {
+                          ...content.founder,
+                          socials: { ...content.founder?.socials, email: e.target.value }
+                        }
+                      })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">WhatsApp Number</label>
+                    <input
+                      type="text"
+                      placeholder="+92 344 6899742"
+                      value={content.founder?.socials?.whatsapp || ''}
+                      onChange={(e) => setContent({
+                        ...content,
+                        founder: {
+                          ...content.founder,
+                          socials: { ...content.founder?.socials, whatsapp: e.target.value }
+                        }
+                      })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <button
                 onClick={async () => {
                   await fetch('/api/admin/content', {
@@ -2063,12 +2753,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     headers: authHeaders,
                     body: JSON.stringify(content)
                   });
-                  alert('Content CMS updated successfully.');
+                  alert('Content CMS & Founder Profile updated successfully.');
                   fetchAllData();
                 }}
                 className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold"
               >
-                Save Content CMS Changes
+                Save Content CMS & Founder Profile
               </button>
             </div>
           </div>
@@ -2157,6 +2847,82 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 </div>
               </div>
 
+              {/* Official Brand Social Media Links Section */}
+              <div className="space-y-4 pt-4 border-t border-slate-800">
+                <div className="text-blue-400 font-bold uppercase tracking-wider text-xs flex items-center justify-between">
+                  <span>Official Brand Social Media Links</span>
+                  <span className="text-[10px] text-slate-400">Rendered dynamically in footer & public site</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">LinkedIn Company Page</label>
+                    <input
+                      type="url"
+                      placeholder="https://linkedin.com/company/..."
+                      value={settings.socialLinks?.linkedin || ''}
+                      onChange={(e) => setSettings({
+                        ...settings,
+                        socialLinks: { ...settings.socialLinks, linkedin: e.target.value }
+                      })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">Twitter / X Handle or URL</label>
+                    <input
+                      type="url"
+                      placeholder="https://x.com/..."
+                      value={settings.socialLinks?.twitter || ''}
+                      onChange={(e) => setSettings({
+                        ...settings,
+                        socialLinks: { ...settings.socialLinks, twitter: e.target.value }
+                      })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">Instagram Profile URL</label>
+                    <input
+                      type="url"
+                      placeholder="https://instagram.com/..."
+                      value={settings.socialLinks?.instagram || ''}
+                      onChange={(e) => setSettings({
+                        ...settings,
+                        socialLinks: { ...settings.socialLinks, instagram: e.target.value }
+                      })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">YouTube Channel URL</label>
+                    <input
+                      type="url"
+                      placeholder="https://youtube.com/@..."
+                      value={settings.socialLinks?.youtube || ''}
+                      onChange={(e) => setSettings({
+                        ...settings,
+                        socialLinks: { ...settings.socialLinks, youtube: e.target.value }
+                      })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                    />
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="text-slate-300 font-medium">Facebook Page URL</label>
+                    <input
+                      type="url"
+                      placeholder="https://facebook.com/..."
+                      value={settings.socialLinks?.facebook || ''}
+                      onChange={(e) => setSettings({
+                        ...settings,
+                        socialLinks: { ...settings.socialLinks, facebook: e.target.value }
+                      })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* Contact Info Section */}
               <div className="space-y-4 pt-4 border-t border-slate-800">
                 <div className="text-blue-400 font-bold uppercase tracking-wider text-xs">
@@ -2189,6 +2955,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                       value={settings.primaryEmail || ''}
                       onChange={(e) => setSettings({ ...settings, primaryEmail: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">Website Domain URL</label>
+                    <input
+                      type="url"
+                      placeholder="http://www.ahsanlab.qd.je"
+                      value={settings.siteUrl || 'http://www.ahsanlab.qd.je'}
+                      onChange={(e) => setSettings({ ...settings, siteUrl: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs"
                     />
                   </div>
                 </div>
@@ -2517,6 +3293,14 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             </form>
           </div>
         </div>
+      )}
+
+      {/* LIVE VIDEO PREVIEW MODAL */}
+      {previewingDemo && (
+        <VideoModal 
+          demo={previewingDemo} 
+          onClose={() => setPreviewingDemo(null)} 
+        />
       )}
 
     </div>

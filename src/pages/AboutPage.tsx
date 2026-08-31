@@ -34,14 +34,13 @@ export const AboutPage: React.FC<AboutPageProps> = ({
     name: 'Ahsan Ali',
     title: 'Founder & Principal AI Systems Architect',
     bio: 'Ahsan Ali is an AI automation architect and engineer dedicated to helping forward-thinking enterprises bridge the gap between cutting-edge artificial intelligence and high-ROI business operations. With deep expertise across autonomous agents, telephony voice AI, and scalable API orchestration, Ahsan leads the engineering team at AHSAN AI LABS to deliver robust, enterprise-grade digital systems.',
-    photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80',
+    photoUrl: '/founder.jpg',
     quote: 'True business transformation happens when artificial intelligence moves from theoretical experiments into reliable, everyday autonomous execution.',
     socials: {
-      linkedin: 'https://linkedin.com',
-      twitter: 'https://x.com',
-      github: 'https://github.com',
+      linkedin: 'https://linkedin.com/in/ahsanali',
+      twitter: 'https://x.com/ahsanali',
       email: 'ahsan@ahsanailabs.com',
-      whatsapp: '+1234567890'
+      whatsapp: '+92 344 6899742'
     }
   };
 
@@ -263,16 +262,16 @@ export const AboutPage: React.FC<AboutPageProps> = ({
                   <Twitter className="w-4 h-4" />
                 </a>
               )}
-              {founder.socials.github && (
+              {founder.socials.whatsapp && (
                 <a 
-                  href={founder.socials.github} 
+                  href={`https://wa.me/${founder.socials.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hello Ahsan, I visited AHSAN AI LABS and would like to connect.')}`} 
                   target="_blank" 
                   rel="noreferrer"
-                  className="p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
-                  title="GitHub"
-                  aria-label="Founder GitHub"
+                  className="p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-emerald-600 transition-colors"
+                  title="WhatsApp"
+                  aria-label="Founder WhatsApp"
                 >
-                  <Github className="w-4 h-4" />
+                  <MessageSquare className="w-4 h-4" />
                 </a>
               )}
               {founder.socials.email && (
