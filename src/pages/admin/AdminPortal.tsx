@@ -197,6 +197,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   // Webhook testing
   const [webhookTestResult, setWebhookTestResult] = useState<any>(null);
   const [isTestingWebhook, setIsTestingWebhook] = useState(false);
+  const [contactWebhookResult, setContactWebhookResult] = useState<any>(null);
+  const [orderWebhookResult, setOrderWebhookResult] = useState<any>(null);
+  const [isTestingContactWebhook, setIsTestingContactWebhook] = useState(false);
+  const [isTestingOrderWebhook, setIsTestingOrderWebhook] = useState(false);
+  const [isSendingSampleContact, setIsSendingSampleContact] = useState(false);
+  const [isSendingSampleOrder, setIsSendingSampleOrder] = useState(false);
+  const [sampleLeadResult, setSampleLeadResult] = useState<{ type: string; success: boolean; message: string; inquiryId?: string } | null>(null);
+  const [showN8nGuideModal, setShowN8nGuideModal] = useState(false);
+  const [activeN8nTab, setActiveN8nTab] = useState<'contact' | 'order'>('order');
+  const [copiedN8nJson, setCopiedN8nJson] = useState(false);
   const [settingsSavedMessage, setSettingsSavedMessage] = useState('');
 
   const authHeaders = {
@@ -986,6 +996,100 @@ WhatsApp: +92 344 6899742`;
       setWebhookTestResult({ ok: false, statusText: err.message });
     } finally {
       setIsTestingWebhook(false);
+    }
+  };
+
+  const handleTestWebhookTarget = async (type: 'CONTACT_FORM' | 'ORDER_FORM') => {
+    const isContact = type === 'CONTACT_FORM';
+    const targetUrl = isContact ? settings?.n8nContactWebhookUrl : settings?.n8nOrderWebhookUrl;
+    if (!targetUrl) {
+      alert(`Please enter a valid ${isContact ? 'Contact' : 'Order'} Webhook URL first.`);
+      return;
+    }
+
+    if (isContact) {
+      setIsTestingContactWebhook(true);
+      setContactWebhookResult(null);
+    } else {
+      setIsTestingOrderWebhook(true);
+      setOrderWebhookResult(null);
+    }
+
+    try {
+      const res = await fetch('/api/admin/test-webhook', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          url: targetUrl,
+          secret: settings?.n8nWebhookSecret,
+          type
+        })
+      });
+      const data = await res.json();
+      const result = data.data || { ok: false, statusText: 'Error' };
+      if (isContact) {
+        setContactWebhookResult(result);
+      } else {
+        setOrderWebhookResult(result);
+      }
+    } catch (err: any) {
+      if (isContact) {
+        setContactWebhookResult({ ok: false, statusText: err.message });
+      } else {
+        setOrderWebhookResult({ ok: false, statusText: err.message });
+      }
+    } finally {
+      if (isContact) {
+        setIsTestingContactWebhook(false);
+      } else {
+        setIsTestingOrderWebhook(false);
+      }
+    }
+  };
+
+  const handleSendSampleInquiry = async (type: 'CONTACT_FORM' | 'ORDER_FORM') => {
+    const isContact = type === 'CONTACT_FORM';
+    if (isContact) {
+      setIsSendingSampleContact(true);
+    } else {
+      setIsSendingSampleOrder(true);
+    }
+    setSampleLeadResult(null);
+
+    try {
+      const res = await fetch('/api/admin/test-sample-inquiry', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ type })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSampleLeadResult({
+          type,
+          success: true,
+          message: data.message || 'Sample test inquiry processed successfully!',
+          inquiryId: data.inquiryId
+        });
+        fetchAllData();
+      } else {
+        setSampleLeadResult({
+          type,
+          success: false,
+          message: data.message || 'Failed to dispatch sample inquiry.'
+        });
+      }
+    } catch (err: any) {
+      setSampleLeadResult({
+        type,
+        success: false,
+        message: err.message || 'Network error triggering sample inquiry.'
+      });
+    } finally {
+      if (isContact) {
+        setIsSendingSampleContact(false);
+      } else {
+        setIsSendingSampleOrder(false);
+      }
     }
   };
 
@@ -3122,54 +3226,213 @@ WhatsApp: +92 344 6899742`;
 
             <form onSubmit={handleSaveSettings} className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-6 text-xs">
               
-              {/* n8n Section */}
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2 text-cyan-400 font-bold uppercase tracking-wider text-xs">
-                  <Zap className="w-4 h-4" />
-                  <span>n8n Webhook & Automation Workflow</span>
-                </div>
+              {/* N8N & AUTOMATION DUAL WEBHOOK CONTROL SUITE */}
+              <div className="space-y-5">
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                  <div className="flex items-center space-x-2 text-cyan-400 font-bold uppercase tracking-wider text-xs">
+                    <Zap className="w-4 h-4 text-yellow-400" />
+                    <span>n8n Webhook & Automation Workflow Engine</span>
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="text-slate-300 font-medium">n8n Webhook Target URL</label>
-                  <input
-                    type="url"
-                    placeholder="https://n8n.yourdomain.com/webhook/..."
-                    value={settings.n8nWebhookUrl || ''}
-                    onChange={(e) => setSettings({ ...settings, n8nWebhookUrl: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono"
-                  />
-                  <p className="text-[11px] text-slate-500">
-                    The backend dispatches a secure POST payload with complete inquiry parameters whenever a visitor submits an order.
-                  </p>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-slate-300 font-medium">n8n Webhook Secret Token (Optional)</label>
-                  <input
-                    type="password"
-                    placeholder="Bearer secret token"
-                    value={settings.n8nWebhookSecret || ''}
-                    onChange={(e) => setSettings({ ...settings, n8nWebhookSecret: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono"
-                  />
-                </div>
-
-                <div className="pt-2 flex items-center space-x-3">
                   <button
                     type="button"
-                    onClick={handleTestWebhook}
-                    disabled={isTestingWebhook || !settings.n8nWebhookUrl}
-                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 font-semibold flex items-center space-x-1.5"
+                    onClick={() => setShowN8nGuideModal(true)}
+                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold text-xs flex items-center space-x-1.5 shadow-md shadow-blue-600/30 transition-all"
                   >
-                    <Send className={`w-3.5 h-3.5 ${isTestingWebhook ? 'animate-spin' : ''}`} />
-                    <span>Send Test Ping to Webhook</span>
+                    <FileCode className="w-3.5 h-3.5" />
+                    <span>View N8N Workflows & Prompts</span>
                   </button>
+                </div>
 
-                  {webhookTestResult && (
-                    <div className={`text-xs px-2 py-1 rounded font-mono ${webhookTestResult.ok ? 'text-emerald-400 bg-emerald-950' : 'text-red-400 bg-red-950'}`}>
-                      {webhookTestResult.ok ? `HTTP ${webhookTestResult.status} OK` : `Failed: ${webhookTestResult.statusText || 'Error'}`}
+                {sampleLeadResult && (
+                  <div className={`p-4 rounded-2xl text-xs flex items-start justify-between space-x-3 ${
+                    sampleLeadResult.success 
+                      ? 'bg-emerald-950/80 border border-emerald-700 text-emerald-200' 
+                      : 'bg-red-950/80 border border-red-700 text-red-200'
+                  }`}>
+                    <div>
+                      <div className="font-bold uppercase tracking-wider text-[11px]">
+                        {sampleLeadResult.success ? '✓ Sample Dispatch Complete' : '✕ Sample Dispatch Failed'}
+                      </div>
+                      <div className="mt-1">{sampleLeadResult.message}</div>
+                      {sampleLeadResult.inquiryId && (
+                        <div className="font-mono text-cyan-300 mt-1 font-semibold">
+                          Registered Lead ID: {sampleLeadResult.inquiryId}
+                        </div>
+                      )}
                     </div>
-                  )}
+                    <button
+                      type="button"
+                      onClick={() => setSampleLeadResult(null)}
+                      className="text-slate-400 hover:text-white"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+
+                {/* DUAL CHANNEL GRID */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  
+                  {/* 1. CONTACT FORM WEBHOOK */}
+                  <div className="p-5 rounded-2xl bg-slate-950 border border-blue-900/60 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <MessageSquare className="w-4 h-4 text-cyan-400" />
+                        <span className="font-bold text-white uppercase text-[11px] tracking-wider">
+                          1. Contact Form Webhook
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={settings.n8nContactEnabled ?? true}
+                          onChange={(e) => setSettings({ ...settings, n8nContactEnabled: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-500"></div>
+                        <span className="ml-2 text-[10px] text-slate-400 font-semibold">
+                          {settings.n8nContactEnabled !== false ? 'ENABLED' : 'DISABLED'}
+                        </span>
+                      </label>
+                    </div>
+
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Triggers instant auto-replies when visitors submit a query via the <b>Contact Page</b> (includes user inquiry ID, contact method, WhatsApp, and message).
+                    </p>
+
+                    <div className="space-y-1">
+                      <label className="text-slate-300 font-medium">Contact Webhook URL</label>
+                      <input
+                        type="url"
+                        placeholder="https://n8n.yourdomain.com/webhook/contact-inquiry"
+                        value={settings.n8nContactWebhookUrl || ''}
+                        onChange={(e) => setSettings({ ...settings, n8nContactWebhookUrl: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-mono text-xs focus:border-cyan-500"
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => handleTestWebhookTarget('CONTACT_FORM')}
+                        disabled={isTestingContactWebhook || !settings.n8nContactWebhookUrl}
+                        className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 border border-slate-700"
+                      >
+                        <Send className={`w-3 h-3 ${isTestingContactWebhook ? 'animate-spin' : ''}`} />
+                        <span>Ping Webhook</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSendSampleInquiry('CONTACT_FORM')}
+                        disabled={isSendingSampleContact}
+                        className="px-3 py-1.5 rounded-lg bg-cyan-950 hover:bg-cyan-900 text-cyan-300 text-xs font-semibold flex items-center space-x-1.5 border border-cyan-800"
+                      >
+                        <Sparkles className={`w-3 h-3 ${isSendingSampleContact ? 'animate-spin' : ''}`} />
+                        <span>Send Test Lead</span>
+                      </button>
+
+                      {contactWebhookResult && (
+                        <span className={`text-[11px] px-2 py-0.5 rounded font-mono ${contactWebhookResult.ok ? 'text-emerald-400 bg-emerald-950 border border-emerald-800' : 'text-red-400 bg-red-950 border border-red-800'}`}>
+                          {contactWebhookResult.ok ? `HTTP ${contactWebhookResult.status} OK` : `Error: ${contactWebhookResult.statusText || 'Failed'}`}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 2. ORDER / GET STARTED FORM WEBHOOK */}
+                  <div className="p-5 rounded-2xl bg-slate-950 border border-purple-900/60 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Layers className="w-4 h-4 text-purple-400" />
+                        <span className="font-bold text-white uppercase text-[11px] tracking-wider">
+                          2. Order & Scope Form Webhook
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={settings.n8nOrderEnabled ?? true}
+                          onChange={(e) => setSettings({ ...settings, n8nOrderEnabled: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500"></div>
+                        <span className="ml-2 text-[10px] text-slate-400 font-semibold">
+                          {settings.n8nOrderEnabled !== false ? 'ENABLED' : 'DISABLED'}
+                        </span>
+                      </label>
+                    </div>
+
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Triggers full project scoping pipelines (sends formatted email via Gmail, WhatsApp confirmation via Evolution API, and admin alert).
+                    </p>
+
+                    <div className="space-y-1">
+                      <label className="text-slate-300 font-medium">Order Webhook URL</label>
+                      <input
+                        type="url"
+                        placeholder="https://n8n.yourdomain.com/webhook/order-inquiry"
+                        value={settings.n8nOrderWebhookUrl || ''}
+                        onChange={(e) => setSettings({ ...settings, n8nOrderWebhookUrl: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-mono text-xs focus:border-purple-500"
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => handleTestWebhookTarget('ORDER_FORM')}
+                        disabled={isTestingOrderWebhook || !settings.n8nOrderWebhookUrl}
+                        className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 border border-slate-700"
+                      >
+                        <Send className={`w-3 h-3 ${isTestingOrderWebhook ? 'animate-spin' : ''}`} />
+                        <span>Ping Webhook</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSendSampleInquiry('ORDER_FORM')}
+                        disabled={isSendingSampleOrder}
+                        className="px-3 py-1.5 rounded-lg bg-purple-950 hover:bg-purple-900 text-purple-300 text-xs font-semibold flex items-center space-x-1.5 border border-purple-800"
+                      >
+                        <Sparkles className={`w-3 h-3 ${isSendingSampleOrder ? 'animate-spin' : ''}`} />
+                        <span>Send Test Order</span>
+                      </button>
+
+                      {orderWebhookResult && (
+                        <span className={`text-[11px] px-2 py-0.5 rounded font-mono ${orderWebhookResult.ok ? 'text-emerald-400 bg-emerald-950 border border-emerald-800' : 'text-red-400 bg-red-950 border border-red-800'}`}>
+                          {orderWebhookResult.ok ? `HTTP ${orderWebhookResult.status} OK` : `Error: ${orderWebhookResult.statusText || 'Failed'}`}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* SHARED WEBHOOK SETTINGS */}
+                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">Default / Fallback n8n Webhook URL</label>
+                    <input
+                      type="url"
+                      placeholder="https://n8n.yourdomain.com/webhook/..."
+                      value={settings.n8nWebhookUrl || ''}
+                      onChange={(e) => setSettings({ ...settings, n8nWebhookUrl: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-mono text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">Shared Webhook Secret Token (Optional)</label>
+                    <input
+                      type="password"
+                      placeholder="Bearer secret token"
+                      value={settings.n8nWebhookSecret || ''}
+                      onChange={(e) => setSettings({ ...settings, n8nWebhookSecret: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-mono text-xs"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -3714,6 +3977,172 @@ WhatsApp: +92 344 6899742`;
           demo={previewingDemo} 
           onClose={() => setPreviewingDemo(null)} 
         />
+      )}
+
+      {/* N8N WORKFLOW BLUEPRINTS & PROMPT GUIDE MODAL */}
+      {showN8nGuideModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in overflow-y-auto">
+          <div className="w-full max-w-4xl bg-slate-900 border border-cyan-800/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl my-8 max-h-[90vh] flex flex-col">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800 shrink-0">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-2xl bg-yellow-950/80 border border-yellow-700/50 text-yellow-400 flex items-center justify-center">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold font-heading text-white">
+                    n8n Automation Engine & Workflow Prompts
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Pre-configured production workflow templates for Gmail & Evolution API WhatsApp
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowN8nGuideModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-slate-800 space-x-2 shrink-0">
+              <button
+                onClick={() => setActiveN8nTab('order')}
+                className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center space-x-2 ${
+                  activeN8nTab === 'order'
+                    ? 'bg-purple-950/80 text-purple-300 border-t-2 border-purple-500'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Layers className="w-4 h-4" />
+                <span>1. Order & Scope Workflow (Gmail + Evolution API)</span>
+              </button>
+              <button
+                onClick={() => setActiveN8nTab('contact')}
+                className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center space-x-2 ${
+                  activeN8nTab === 'contact'
+                    ? 'bg-cyan-950/80 text-cyan-300 border-t-2 border-cyan-500'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>2. Contact Form Auto-responder</span>
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="overflow-y-auto space-y-6 pr-2 text-xs">
+              {activeN8nTab === 'order' ? (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-2xl bg-purple-950/40 border border-purple-900/60 space-y-2">
+                    <div className="font-bold text-purple-300 uppercase tracking-wider text-[11px]">
+                      Workflow Architecture Overview:
+                    </div>
+                    <ul className="list-disc list-inside space-y-1 text-slate-300 leading-relaxed">
+                      <li><b>Webhook Trigger:</b> Receives inquiry payload (Inquiry ID, Client Name, Email, WhatsApp, Service, Budget, Timeline, Problem, Requirements, Pre-rendered HTML & WhatsApp text).</li>
+                      <li><b>Node 1 (Gmail Send Email):</b> Sends branded confirmation email to client with customized inquiry dossier and next discovery call steps.</li>
+                      <li><b>Node 2 (HTTP Request - Evolution API WhatsApp):</b> Dispatches instant WhatsApp confirmation to client phone number (`inquiry.whatsapp`).</li>
+                      <li><b>Node 3 (Admin Alert):</b> Dispatches formatted WhatsApp message and email to Ahsan Ali (+92 344 6899742 / admin@ahsanailabs.com).</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-white uppercase text-[11px]">Evolution API Request Configuration:</span>
+                      <span className="text-[10px] text-slate-500 font-mono">POST /message/sendText/{'{instance}'}</span>
+                    </div>
+                    <pre className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-cyan-300 overflow-x-auto leading-relaxed">
+{`// URL: https://your-evolution-api.com/message/sendText/AHSAN_LABS_INSTANCE
+// Headers: { "apikey": "YOUR_EVOLUTION_API_KEY", "Content-Type": "application/json" }
+// Body:
+{
+  "number": "{{ $json.body.inquiry.whatsapp }}",
+  "options": {
+    "delay": 1200,
+    "presence": "composing",
+    "linkPreview": true
+  },
+  "textMessage": {
+    "text": "{{ $json.body.templates.whatsappClient }}"
+  }
+}`}
+                    </pre>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-white uppercase text-[11px]">Gmail Node Configuration:</span>
+                      <span className="text-[10px] text-slate-500">n8n Gmail Node</span>
+                    </div>
+                    <pre className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-emerald-300 overflow-x-auto leading-relaxed">
+{`To: {{ $json.body.inquiry.email }}
+Subject: Project Inquiry Confirmed [{{ $json.body.inquiry.inquiryId }}] — AHSAN AI LABS
+Email Type: HTML
+HTML Body: {{ $json.body.templates.emailHtml }}`}
+                    </pre>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-2xl bg-cyan-950/40 border border-cyan-900/60 space-y-2">
+                    <div className="font-bold text-cyan-300 uppercase tracking-wider text-[11px]">
+                      Contact Form Flow Architecture:
+                    </div>
+                    <p className="text-slate-300 leading-relaxed">
+                      Instant auto-reply workflow for visitors submitting questions from the Contact Page. Informs the user that the engineering team is reviewing their query and will reply via their selected contact channel.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-white uppercase text-[11px]">Contact Flow Webhook JSON Structure:</span>
+                      <span className="text-[10px] text-slate-500 font-mono">POST Payload</span>
+                    </div>
+                    <pre className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-cyan-300 overflow-x-auto leading-relaxed">
+{`{
+  "event": "CONTACT_FORM_SUBMITTED",
+  "inquiry": {
+    "inquiryId": "AHSAN-2026-XXXX",
+    "fullName": "Client Name",
+    "companyName": "Company / Direct Contact",
+    "email": "client@example.com",
+    "whatsapp": "+923001234567",
+    "service": "AI Voice Agents",
+    "subject": "Inquiry Subject",
+    "problem": "Message from client",
+    "preferredContact": "WhatsApp"
+  },
+  "templates": {
+    "whatsappClient": "Hello Alex, Thank you for reaching out to AHSAN AI LABS...",
+    "emailHtml": "<html>...</html>",
+    "whatsappAdminAlert": "🔔 *NEW CONTACT INQUIRY RECEIVED*..."
+  }
+}`}
+                    </pre>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-between items-center pt-4 border-t border-slate-800 shrink-0">
+              <div className="text-[11px] text-slate-400">
+                You can copy these parameters or trigger test leads directly from the <b>Settings</b> tab.
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowN8nGuideModal(false)}
+                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md shadow-blue-600/30"
+              >
+                Done
+              </button>
+            </div>
+
+          </div>
+        </div>
       )}
 
     </div>

@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /api/admin/
-Disallow: /api/analytics/export
+Disallow: /api/analytics/
 
 User-agent: Googlebot
 Allow: /
@@ -14,5 +14,6 @@ Allow: /
 Disallow: /admin
 Disallow: /api/admin/
 
-Sitemap: http://www.ahsanlab.qd.je/sitemap.xml
+Sitemap: https://ahsanlab.qd.je/sitemap.xml
+
 

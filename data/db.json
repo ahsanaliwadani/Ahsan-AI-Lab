@@ -546,8 +546,8 @@
     "tagline": "INTELLIGENCE. AUTOMATION. INNOVATION.",
     "logoText": "AHSAN AI LABS",
     "primaryEmail": "contact@ahsanailabs.com",
-    "supportWhatsApp": "+1 (555) 019-8234",
-    "whatsappDirectNumber": "15550198234",
+    "supportWhatsApp": "+92 344 6899742",
+    "whatsappDirectNumber": "923446899742",
     "address": "Global Technology Labs • Available Worldwide",
     "officeHours": "Monday – Saturday: 24/7 Enterprise Coverage",
     "socialLinks": {
@@ -557,12 +557,16 @@
       "youtube": "https://youtube.com/@ahsanailabs",
       "facebook": "https://facebook.com/ahsanailabs"
     },
-    "n8nWebhookUrl": "",
+    "n8nWebhookUrl": "https://n8n-130-110-123-57.nip.io/webhook/contact-inquiry",
+    "n8nContactWebhookUrl": "https://n8n-130-110-123-57.nip.io/webhook/contact-inquiry",
+    "n8nOrderWebhookUrl": "https://n8n-130-110-123-57.nip.io/webhook/contact-inquiry",
     "n8nWebhookSecret": "",
     "n8nEnabled": true,
+    "n8nContactEnabled": true,
+    "n8nOrderEnabled": true,
     "emailNotificationsEnabled": true,
     "whatsappNotificationsEnabled": true,
-    "siteUrl": "http://www.ahsanlab.qd.je"
+    "siteUrl": "https://ahsanlab.qd.je"
   },
   "auditLogs": [
     {
@@ -584,10 +588,404 @@
       "lastLogin": "2026-08-31T06:13:02.665Z"
     }
   ],
-  "analyticsEvents": [],
-  "webVitals": [],
+  "analyticsEvents": [
+    {
+      "_id": "evt_1788265049702_gdvln1",
+      "visitorId": "v_ix9kxeh4wmtfehshk",
+      "sessionId": "s_7a0xg3gj4",
+      "eventType": "PAGE_VIEW",
+      "eventName": "page_view",
+      "path": "/faq",
+      "referrer": "https://aistudio.google.com/",
+      "trafficSource": "Organic Search",
+      "deviceType": "Desktop",
+      "browser": "Chrome",
+      "os": "Windows",
+      "country": "United States",
+      "metadata": {
+        "path": "/faq"
+      },
+      "timestamp": "2026-09-01T12:17:29.702Z"
+    },
+    {
+      "_id": "evt_1788265049094_nxx7vl",
+      "visitorId": "v_ix9kxeh4wmtfehshk",
+      "sessionId": "s_7a0xg3gj4",
+      "eventType": "PAGE_VIEW",
+      "eventName": "page_view",
+      "path": "/about",
+      "referrer": "https://aistudio.google.com/",
+      "trafficSource": "Organic Search",
+      "deviceType": "Desktop",
+      "browser": "Chrome",
+      "os": "Windows",
+      "country": "United States",
+      "metadata": {
+        "path": "/about"
+      },
+      "timestamp": "2026-09-01T12:17:29.094Z"
+    },
+    {
+      "_id": "evt_1788265048319_4iu03b",
+      "visitorId": "v_ix9kxeh4wmtfehshk",
+      "sessionId": "s_7a0xg3gj4",
+      "eventType": "PAGE_VIEW",
+      "eventName": "page_view",
+      "path": "/demos",
+      "referrer": "https://aistudio.google.com/",
+      "trafficSource": "Organic Search",
+      "deviceType": "Desktop",
+      "browser": "Chrome",
+      "os": "Windows",
+      "country": "United States",
+      "metadata": {
+        "path": "/demos"
+      },
+      "timestamp": "2026-09-01T12:17:28.319Z"
+    },
+    {
+      "_id": "evt_1788265047471_f9wilv",
+      "visitorId": "v_ix9kxeh4wmtfehshk",
+      "sessionId": "s_7a0xg3gj4",
+      "eventType": "PAGE_VIEW",
+      "eventName": "page_view",
+      "path": "/",
+      "referrer": "https://aistudio.google.com/",
+      "trafficSource": "Organic Search",
+      "deviceType": "Desktop",
+      "browser": "Chrome",
+      "os": "Windows",
+      "country": "United States",
+      "metadata": {
+        "path": "/"
+      },
+      "timestamp": "2026-09-01T12:17:27.471Z"
+    },
+    {
+      "_id": "evt_1788265046786_2r42lz",
+      "visitorId": "v_ix9kxeh4wmtfehshk",
+      "sessionId": "s_7a0xg3gj4",
+      "eventType": "PAGE_VIEW",
+      "eventName": "page_view",
+      "path": "/services",
+      "referrer": "https://aistudio.google.com/",
+      "trafficSource": "Organic Search",
+      "deviceType": "Desktop",
+      "browser": "Chrome",
+      "os": "Windows",
+      "country": "United States",
+      "metadata": {
+        "path": "/services"
+      },
+      "timestamp": "2026-09-01T12:17:26.786Z"
+    },
+    {
+      "_id": "evt_1788264469875_wvlakt",
+      "visitorId": "v_ix9kxeh4wmtfehshk",
+      "sessionId": "s_7a0xg3gj4",
+      "eventType": "FORM_START",
+      "eventName": "inquiry_form_started",
+      "path": "/get-started",
+      "referrer": "https://aistudio.google.com/",
+      "trafficSource": "Organic Search",
+      "deviceType": "Desktop",
+      "browser": "Chrome",
+      "os": "Windows",
+      "country": "United States",
+      "metadata": {
+        "initialService": "AI Agents"
+      },
+      "timestamp": "2026-09-01T12:07:49.875Z"
+    },
+    {
+      "_id": "evt_1788264469871_h91iwf",
+      "visitorId": "v_ix9kxeh4wmtfehshk",
+      "sessionId": "s_7a0xg3gj4",
+      "eventType": "FORM_START",
+      "eventName": "inquiry_form_started",
+      "path": "/get-started",
+      "referrer": "https://aistudio.google.com/",
+      "trafficSource": "Organic Search",
+      "deviceType": "Desktop",
+      "browser": "Chrome",
+      "os": "Windows",
+      "country": "United States",
+      "metadata": {
+        "initialService": "AI Agents"
+      },
+      "timestamp": "2026-09-01T12:07:49.871Z"
+    },
+    {
+      "_id": "evt_1788264469466_vp7xlu",
+      "visitorId": "v_ix9kxeh4wmtfehshk",
+      "sessionId": "s_7a0xg3gj4",
+      "eventType": "PAGE_VIEW",
+      "eventName": "page_view",
+      "path": "/get-started",
+      "referrer": "https://aistudio.google.com/",
+      "trafficSource": "Organic Search",
+      "deviceType": "Desktop",
+      "browser": "Chrome",
+      "os": "Windows",
+      "country": "United States",
+      "metadata": {
+        "path": "/get-started"
+      },
+      "timestamp": "2026-09-01T12:07:49.466Z"
+    },
+    {
+      "_id": "evt_1788264284150_mzu02e",
+      "visitorId": "v_ix9kxeh4wmtfehshk",
+      "sessionId": "s_7a0xg3gj4",
+      "eventType": "PAGE_VIEW",
+      "eventName": "page_view",
+      "path": "/",
+      "referrer": "https://aistudio.google.com/",
+      "trafficSource": "Organic Search",
+      "deviceType": "Desktop",
+      "browser": "Chrome",
+      "os": "Windows",
+      "country": "United States",
+      "metadata": {
+        "path": "/"
+      },
+      "timestamp": "2026-09-01T12:04:44.150Z"
+    },
+    {
+      "_id": "evt_1788264283966_i4yagj",
+      "visitorId": "v_ix9kxeh4wmtfehshk",
+      "sessionId": "s_7a0xg3gj4",
+      "eventType": "PAGE_VIEW",
+      "eventName": "page_view",
+      "path": "/",
+      "referrer": "https://aistudio.google.com/",
+      "trafficSource": "Organic Search",
+      "deviceType": "Desktop",
+      "browser": "Chrome",
+      "os": "Windows",
+      "country": "United States",
+      "metadata": {
+        "path": "/"
+      },
+      "timestamp": "2026-09-01T12:04:43.966Z"
+    }
+  ],
+  "webVitals": [
+    {
+      "_id": "vit_1788264998356_8uug5v",
+      "name": "CLS",
+      "value": 0.939,
+      "rating": "poor",
+      "path": "/",
+      "deviceType": "Desktop",
+      "timestamp": "2026-09-01T12:16:38.356Z"
+    },
+    {
+      "_id": "vit_1788264996891_oxjejr",
+      "name": "CLS",
+      "value": 0.939,
+      "rating": "poor",
+      "path": "/",
+      "deviceType": "Desktop",
+      "timestamp": "2026-09-01T12:16:36.891Z"
+    },
+    {
+      "_id": "vit_1788264735300_wj8f3z",
+      "name": "CLS",
+      "value": 0.935,
+      "rating": "poor",
+      "path": "/",
+      "deviceType": "Desktop",
+      "timestamp": "2026-09-01T12:12:15.300Z"
+    },
+    {
+      "_id": "vit_1788264735293_v1y6x1",
+      "name": "CLS",
+      "value": 0.935,
+      "rating": "poor",
+      "path": "/",
+      "deviceType": "Desktop",
+      "timestamp": "2026-09-01T12:12:15.293Z"
+    },
+    {
+      "_id": "vit_1788264647973_fqlr7y",
+      "name": "CLS",
+      "value": 0.935,
+      "rating": "poor",
+      "path": "/",
+      "deviceType": "Desktop",
+      "timestamp": "2026-09-01T12:10:47.973Z"
+    },
+    {
+      "_id": "vit_1788264647070_69b0gp",
+      "name": "LCP",
+      "value": 33.02,
+      "rating": "poor",
+      "path": "/",
+      "deviceType": "Desktop",
+      "timestamp": "2026-09-01T12:10:47.070Z"
+    },
+    {
+      "_id": "vit_1788264647023_qnjwqg",
+      "name": "CLS",
+      "value": 0.935,
+      "rating": "poor",
+      "path": "/",
+      "deviceType": "Desktop",
+      "timestamp": "2026-09-01T12:10:47.023Z"
+    },
+    {
+      "_id": "vit_1788264646291_75fzn5",
+      "name": "LCP",
+      "value": 33.02,
+      "rating": "poor",
+      "path": "/",
+      "deviceType": "Desktop",
+      "timestamp": "2026-09-01T12:10:46.291Z"
+    },
+    {
+      "_id": "vit_1788264300557_46sech",
+      "name": "FCP",
+      "value": 33.02,
+      "rating": "poor",
+      "path": "/",
+      "deviceType": "Desktop",
+      "timestamp": "2026-09-01T12:05:00.557Z"
+    },
+    {
+      "_id": "vit_1788264300158_smqk8z",
+      "name": "FCP",
+      "value": 33.02,
+      "rating": "poor",
+      "path": "/",
+      "deviceType": "Desktop",
+      "timestamp": "2026-09-01T12:05:00.158Z"
+    },
+    {
+      "_id": "vit_1788264286486_h6in0y",
+      "name": "TTFB",
+      "value": 2016,
+      "rating": "poor",
+      "path": "/",
+      "deviceType": "Desktop",
+      "timestamp": "2026-09-01T12:04:46.486Z"
+    },
+    {
+      "_id": "vit_1788264286484_9byg5j",
+      "name": "TTFB",
+      "value": 2016,
+      "rating": "poor",
+      "path": "/",
+      "deviceType": "Desktop",
+      "timestamp": "2026-09-01T12:04:46.484Z"
+    }
+  ],
   "errorLogs": [],
   "uptimeChecks": [
+    {
+      "id": "up_1788265044519",
+      "timestamp": "2026-09-01T12:17:24.519Z",
+      "status": "HEALTHY",
+      "httpStatusCode": 200,
+      "responseTimeMs": 30,
+      "target": "/api/health"
+    },
+    {
+      "id": "up_1788264984518",
+      "timestamp": "2026-09-01T12:16:24.518Z",
+      "status": "HEALTHY",
+      "httpStatusCode": 200,
+      "responseTimeMs": 41,
+      "target": "/api/health"
+    },
+    {
+      "id": "up_1788264924518",
+      "timestamp": "2026-09-01T12:15:24.518Z",
+      "status": "HEALTHY",
+      "httpStatusCode": 200,
+      "responseTimeMs": 35,
+      "target": "/api/health"
+    },
+    {
+      "id": "up_1788264864517",
+      "timestamp": "2026-09-01T12:14:24.517Z",
+      "status": "HEALTHY",
+      "httpStatusCode": 200,
+      "responseTimeMs": 25,
+      "target": "/api/health"
+    },
+    {
+      "id": "up_1788264804516",
+      "timestamp": "2026-09-01T12:13:24.516Z",
+      "status": "HEALTHY",
+      "httpStatusCode": 200,
+      "responseTimeMs": 22,
+      "target": "/api/health"
+    },
+    {
+      "id": "up_1788264744516",
+      "timestamp": "2026-09-01T12:12:24.516Z",
+      "status": "HEALTHY",
+      "httpStatusCode": 200,
+      "responseTimeMs": 32,
+      "target": "/api/health"
+    },
+    {
+      "id": "up_1788264684515",
+      "timestamp": "2026-09-01T12:11:24.515Z",
+      "status": "HEALTHY",
+      "httpStatusCode": 200,
+      "responseTimeMs": 26,
+      "target": "/api/health"
+    },
+    {
+      "id": "up_1788264624514",
+      "timestamp": "2026-09-01T12:10:24.514Z",
+      "status": "HEALTHY",
+      "httpStatusCode": 200,
+      "responseTimeMs": 22,
+      "target": "/api/health"
+    },
+    {
+      "id": "up_1788264564513",
+      "timestamp": "2026-09-01T12:09:24.513Z",
+      "status": "HEALTHY",
+      "httpStatusCode": 200,
+      "responseTimeMs": 36,
+      "target": "/api/health"
+    },
+    {
+      "id": "up_1788264504512",
+      "timestamp": "2026-09-01T12:08:24.512Z",
+      "status": "HEALTHY",
+      "httpStatusCode": 200,
+      "responseTimeMs": 42,
+      "target": "/api/health"
+    },
+    {
+      "id": "up_1788264444512",
+      "timestamp": "2026-09-01T12:07:24.512Z",
+      "status": "HEALTHY",
+      "httpStatusCode": 200,
+      "responseTimeMs": 20,
+      "target": "/api/health"
+    },
+    {
+      "id": "up_1788264384511",
+      "timestamp": "2026-09-01T12:06:24.511Z",
+      "status": "HEALTHY",
+      "httpStatusCode": 200,
+      "responseTimeMs": 36,
+      "target": "/api/health"
+    },
+    {
+      "id": "up_1788264324511",
+      "timestamp": "2026-09-01T12:05:24.511Z",
+      "status": "HEALTHY",
+      "httpStatusCode": 200,
+      "responseTimeMs": 36,
+      "target": "/api/health"
+    },
     {
       "id": "up_1788153242708",
       "timestamp": "2026-08-31T05:14:02.708Z",

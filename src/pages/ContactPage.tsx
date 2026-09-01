@@ -9,7 +9,10 @@ import {
   ShieldCheck, 
   Sparkles, 
   CheckCircle2,
-  ArrowRight
+  ArrowRight,
+  Bot,
+  Zap,
+  HelpCircle
 } from 'lucide-react';
 import { SiteSettings } from '../types';
 
@@ -24,9 +27,14 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
     email: '',
     whatsapp: '',
     company: '',
-    message: ''
+    service: 'AI Voice Agents',
+    subject: '',
+    message: '',
+    preferredContact: 'WhatsApp',
+    hp_field: ''
   });
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [submittedInquiryId, setSubmittedInquiryId] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,8 +47,8 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
 
     setStatus('submitting');
     try {
-      // Submit as quick contact / inquiry
-      const res = await fetch('/api/inquiries', {
+      // Submit to dedicated contact endpoint
+      const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -48,20 +56,22 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
           companyName: formData.company || 'Direct Contact',
           email: formData.email,
           whatsapp: formData.whatsapp || 'Not provided',
+          service: formData.service,
+          subject: formData.subject || `${formData.service} Inquiry`,
+          message: formData.message,
           country: 'Global / Online',
-          service: 'AI Agents',
-          problem: formData.message,
-          requirements: 'Direct contact consultation request via Contact Form.',
-          preferredContact: formData.whatsapp ? 'WhatsApp' : 'Email'
+          preferredContact: formData.preferredContact,
+          hp_field: formData.hp_field
         })
       });
 
       const data = await res.json();
       if (data.success) {
+        setSubmittedInquiryId(data.inquiryId || '');
         setStatus('success');
       } else {
         setStatus('error');
-        setErrorMessage(data.message || 'Failed to submit inquiry.');
+        setErrorMessage(data.message || 'Failed to submit message.');
       }
     } catch (err: any) {
       setStatus('error');
@@ -99,7 +109,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
             <div className="space-y-4">
               {/* WhatsApp Card */}
               <a 
-                href={`https://wa.me/${settings?.whatsappDirectNumber || '15550198234'}`}
+                href={`https://wa.me/${settings?.whatsappDirectNumber || '923446899742'}`}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-start space-x-4 p-4 rounded-2xl bg-slate-950 hover:bg-slate-900 border border-slate-800/80 hover:border-emerald-700/60 transition-all group"
@@ -112,7 +122,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
                     Official WhatsApp
                   </div>
                   <div className="text-sm font-bold text-white mt-0.5">
-                    {settings?.supportWhatsApp || '+1 (555) 019-8234'}
+                    {settings?.supportWhatsApp || '+92 344 6899742'}
                   </div>
                   <div className="text-xs text-slate-400 mt-1">
                     Instant response for priority inquiries & enterprise chats.
@@ -252,28 +262,67 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
             </p>
 
             {status === 'success' ? (
-              <div className="p-8 rounded-2xl bg-blue-950/50 border border-cyan-500/40 text-center space-y-4 animate-in fade-in duration-300">
+              <div className="p-8 rounded-2xl bg-blue-950/50 border border-cyan-500/40 text-center space-y-5 animate-in fade-in duration-300">
                 <div className="w-14 h-14 rounded-full bg-emerald-600 text-white flex items-center justify-center mx-auto shadow-lg shadow-emerald-600/30">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
                 <h4 className="text-xl font-bold font-heading text-white">
                   Message Sent Successfully!
                 </h4>
-                <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto">
-                  Thank you for reaching out to AHSAN AI LABS. An automated confirmation has been queued and our team will get back to you promptly.
-                </p>
-                <button
-                  onClick={() => {
-                    setStatus('idle');
-                    setFormData({ name: '', email: '', whatsapp: '', company: '', message: '' });
-                  }}
-                  className="text-xs font-semibold text-blue-400 hover:underline"
-                >
-                  Send another message
-                </button>
+                <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 space-y-2 max-w-md mx-auto">
+                  <div>
+                    <span className="text-slate-400">Reference ID: </span>
+                    <span className="font-mono font-bold text-cyan-400">{submittedInquiryId || 'AHSAN-2026-CONFIRMED'}</span>
+                  </div>
+                  <p className="text-slate-300 leading-relaxed">
+                    Thank you for contacting <b>AHSAN AI LABS</b>. Our team has received your message and will reach out to you shortly via <b>{formData.preferredContact}</b>.
+                  </p>
+                </div>
+                
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <a
+                    href={`https://wa.me/${settings?.whatsappDirectNumber || '923446899742'}?text=${encodeURIComponent(`Hello Ahsan AI Labs team, I just submitted a message on the contact form with Reference ID ${submittedInquiryId}.`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors shadow-md shadow-emerald-600/30 space-x-2"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    <span>Chat on WhatsApp Now</span>
+                  </a>
+                  <button
+                    onClick={() => {
+                      setStatus('idle');
+                      setFormData({ 
+                        name: '', 
+                        email: '', 
+                        whatsapp: '', 
+                        company: '', 
+                        service: 'AI Voice Agents',
+                        subject: '',
+                        message: '',
+                        preferredContact: 'WhatsApp',
+                        hp_field: ''
+                      });
+                    }}
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+                  >
+                    Send Another Message
+                  </button>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Honeypot field (hidden from humans) */}
+                <input
+                  type="text"
+                  name="hp_field"
+                  value={formData.hp_field}
+                  onChange={(e) => setFormData({ ...formData, hp_field: e.target.value })}
+                  style={{ display: 'none' }}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+
                 {status === 'error' && (
                   <div className="p-3.5 rounded-xl bg-red-950/60 border border-red-800 text-red-300 text-xs">
                     {errorMessage}
@@ -319,15 +368,57 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
                   </div>
 
                   <div className="space-y-1 text-left">
-                    <label className="text-xs font-medium text-slate-300">WhatsApp / Phone (with country code)</label>
+                    <label className="text-xs font-medium text-slate-300">WhatsApp / Phone Number</label>
                     <input
                       type="text"
-                      placeholder="+1 (555) 000-0000"
+                      placeholder="+92 300 1234567"
                       value={formData.whatsapp}
                       onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                       className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-100 text-xs sm:text-sm"
                     />
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1 text-left">
+                    <label className="text-xs font-medium text-slate-300">Service of Interest</label>
+                    <select
+                      value={formData.service}
+                      onChange={(e) => setFormData({ ...formData, service: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-100 text-xs sm:text-sm"
+                    >
+                      <option value="AI Voice Agents">AI Voice Agents</option>
+                      <option value="Business Automation">Business Automation</option>
+                      <option value="AI Chatbots">AI Chatbots & Assistants</option>
+                      <option value="AI Agents">Autonomous AI Agents</option>
+                      <option value="Enterprise AI Solutions">Enterprise AI Systems</option>
+                      <option value="Other Consultation">Other Consultation</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1 text-left">
+                    <label className="text-xs font-medium text-slate-300">Preferred Contact Channel</label>
+                    <select
+                      value={formData.preferredContact}
+                      onChange={(e) => setFormData({ ...formData, preferredContact: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-100 text-xs sm:text-sm"
+                    >
+                      <option value="WhatsApp">WhatsApp (Fastest)</option>
+                      <option value="Email">Email</option>
+                      <option value="Phone Call">Direct Phone Call</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1 text-left">
+                  <label className="text-xs font-medium text-slate-300">Subject (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Inquiring about inbound voice bot for clinic booking"
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-100 text-xs sm:text-sm"
+                  />
                 </div>
 
                 <div className="space-y-1 text-left">
@@ -372,3 +463,4 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
     </div>
   );
 };
+

@@ -13,9 +13,9 @@ export interface PageMetaConfig {
   ogImage?: string;
 }
 
-const BASE_URL = 'http://www.ahsanlab.qd.je';
-const DEFAULT_OG_IMAGE = 'http://www.ahsanlab.qd.je/og-preview.svg';
-const DEFAULT_LOGO_IMAGE = 'http://www.ahsanlab.qd.je/logo.svg';
+const BASE_URL = 'https://ahsanlab.qd.je';
+const DEFAULT_OG_IMAGE = 'https://ahsanlab.qd.je/og-preview.svg';
+const DEFAULT_LOGO_IMAGE = 'https://ahsanlab.qd.je/logo.jpg';
 
 export const PAGE_SEO_MAP: Record<string, PageMetaConfig> = {
   '/': {
@@ -114,8 +114,8 @@ function setCanonicalUrl(url: string) {
  * Apply dynamic SEO meta updates based on current route path
  */
 export function updatePageSEO(path: string): void {
-  // Normalize path
-  const normalizedPath = path.startsWith('/admin') ? '/admin' : (PAGE_SEO_MAP[path] ? path : '/');
+  const isAdmin = path.startsWith('/admin');
+  const normalizedPath = isAdmin ? '/admin' : (PAGE_SEO_MAP[path] ? path : '/');
   const meta = PAGE_SEO_MAP[normalizedPath] || PAGE_SEO_MAP['/'];
 
   // 1. Title
@@ -128,19 +128,27 @@ export function updatePageSEO(path: string): void {
     setMetaTag('name', 'keywords', meta.keywords);
   }
 
-  // 3. Open Graph Tags
+  // 3. Robots Meta (Index public pages, prevent indexing of admin portal)
+  if (isAdmin) {
+    setMetaTag('name', 'robots', 'noindex, nofollow, noarchive');
+  } else {
+    setMetaTag('name', 'robots', 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1');
+  }
+
+  // 4. Open Graph Tags
   setMetaTag('property', 'og:title', meta.title);
   setMetaTag('property', 'og:description', meta.description);
   setMetaTag('property', 'og:url', meta.canonicalUrl || `${BASE_URL}${path}`);
   setMetaTag('property', 'og:type', meta.ogType || 'website');
   setMetaTag('property', 'og:image', meta.ogImage || DEFAULT_OG_IMAGE);
 
-  // 4. Twitter Card Tags
+  // 5. Twitter Card Tags
   setMetaTag('property', 'twitter:title', meta.title);
   setMetaTag('property', 'twitter:description', meta.description);
   setMetaTag('property', 'twitter:url', meta.canonicalUrl || `${BASE_URL}${path}`);
   setMetaTag('property', 'twitter:image', meta.ogImage || DEFAULT_OG_IMAGE);
 
-  // 5. Canonical Link
+  // 6. Canonical Link
   setCanonicalUrl(meta.canonicalUrl || `${BASE_URL}${path}`);
 }
+

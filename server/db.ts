@@ -488,10 +488,10 @@ const initialSettings: SiteSettings = {
   companyName: 'AHSAN AI LABS',
   tagline: 'INTELLIGENCE. AUTOMATION. INNOVATION.',
   logoText: 'AHSAN AI LABS',
-  siteUrl: 'http://www.ahsanlab.qd.je',
+  siteUrl: 'https://ahsanlab.qd.je',
   primaryEmail: 'contact@ahsanailabs.com',
-  supportWhatsApp: '+1 (555) 019-8234',
-  whatsappDirectNumber: '15550198234',
+  supportWhatsApp: '+92 344 6899742',
+  whatsappDirectNumber: '923446899742',
   address: 'Global Technology Labs • Available Worldwide',
   officeHours: 'Monday – Saturday: 24/7 Enterprise Coverage',
   socialLinks: {
@@ -501,9 +501,13 @@ const initialSettings: SiteSettings = {
     youtube: 'https://youtube.com/@ahsanailabs',
     facebook: 'https://facebook.com/ahsanailabs'
   },
-  n8nWebhookUrl: process.env.N8N_WEBHOOK_URL || '',
+  n8nWebhookUrl: process.env.N8N_WEBHOOK_URL || 'https://n8n-130-110-123-57.nip.io/webhook/contact-inquiry',
+  n8nContactWebhookUrl: process.env.N8N_CONTACT_WEBHOOK_URL || 'https://n8n-130-110-123-57.nip.io/webhook/contact-inquiry',
+  n8nOrderWebhookUrl: process.env.N8N_ORDER_WEBHOOK_URL || 'https://n8n-130-110-123-57.nip.io/webhook/contact-inquiry',
   n8nWebhookSecret: process.env.N8N_WEBHOOK_SECRET || '',
   n8nEnabled: true,
+  n8nContactEnabled: true,
+  n8nOrderEnabled: true,
   emailNotificationsEnabled: true,
   whatsappNotificationsEnabled: true
 };

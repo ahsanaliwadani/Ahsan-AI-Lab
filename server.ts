@@ -165,8 +165,94 @@ const requireAdminAuth = (req: AuthenticatedRequest, res: Response, next: NextFu
 };
 
 // ==========================================
-// PUBLIC API & HEALTH ROUTES
+// PUBLIC API & SEO ROUTES
 // ==========================================
+
+// GET /sitemap.xml (Dynamic Search Engine Sitemap with standard protocol schema)
+app.get('/sitemap.xml', (req: Request, res: Response) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+  <url>
+    <loc>https://ahsanlab.qd.je/</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://ahsanlab.qd.je/services</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://ahsanlab.qd.je/demos</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://ahsanlab.qd.je/get-started</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://ahsanlab.qd.je/about</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ahsanlab.qd.je/faq</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ahsanlab.qd.je/contact</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>`;
+
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+    res.status(200).send(sitemapXml);
+  } catch (err: any) {
+    res.status(500).send('Error generating sitemap');
+  }
+});
+
+// GET /robots.txt (Crawler Directive Engine)
+app.get('/robots.txt', (req: Request, res: Response) => {
+  const robotsTxt = `User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/admin/
+Disallow: /api/analytics/
+
+User-agent: Googlebot
+Allow: /
+Disallow: /admin
+Disallow: /api/admin/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin
+Disallow: /api/admin/
+
+Sitemap: https://ahsanlab.qd.je/sitemap.xml
+`;
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.status(200).send(robotsTxt);
+});
 
 // GET /api/health
 app.get('/api/health', (req: Request, res: Response) => {
@@ -378,14 +464,117 @@ app.get('/api/public/settings', (req: Request, res: Response) => {
   }
 });
 
-// POST /api/inquiries (Client Inquiry Submission with Honeypot & Anti-Spam Defense)
+// POST /api/contact (Dedicated Contact Form Submission)
+app.post('/api/contact', inquiryRateLimiter, async (req: Request, res: Response) => {
+  try {
+    const {
+      fullName,
+      name,
+      companyName,
+      company,
+      email,
+      whatsapp,
+      phone,
+      service,
+      subject,
+      message,
+      country,
+      preferredContact,
+      hp_field
+    } = req.body;
+
+    // Honeypot check
+    if (hp_field) {
+      console.warn('Honeypot trap triggered on contact form');
+      return res.status(200).json({
+        success: true,
+        message: 'Thank you for contacting AHSAN AI LABS! We have received your query.',
+        inquiryId: 'AHSAN-2026-CONFIRMED'
+      });
+    }
+
+    const resolvedName = (fullName || name || '').trim();
+    const resolvedEmail = (email || '').trim();
+    const resolvedMessage = (message || '').trim();
+    const resolvedWhatsApp = (whatsapp || phone || 'Not provided').trim();
+    const resolvedCompany = (companyName || company || 'Direct Contact').trim();
+    const resolvedService = (service || 'AI Agents') as any;
+
+    if (!resolvedName || !resolvedEmail || !resolvedMessage) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide your name, a valid email address, and a message description.'
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(resolvedEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email format.'
+      });
+    }
+
+    // Save directly to database
+    const savedInquiry = db.createInquiry({
+      fullName: resolvedName,
+      companyName: resolvedCompany,
+      email: resolvedEmail,
+      whatsapp: resolvedWhatsApp,
+      country: country ? country.trim() : 'Global / Online',
+      service: resolvedService,
+      industry: 'Direct Consultation',
+      businessDescription: 'Inquiry received via Contact Page Form',
+      problem: resolvedMessage,
+      requirements: subject ? `Subject: ${subject}\n\nMessage: ${resolvedMessage}` : resolvedMessage,
+      timeline: 'Prompt / Flexible',
+      budget: 'Consultation Scope',
+      preferredContact: (preferredContact as any) || (resolvedWhatsApp !== 'Not provided' ? 'WhatsApp' : 'Email'),
+      source: 'CONTACT_PAGE',
+      subject: subject || 'Contact Page Consultation'
+    });
+
+    // Trigger Contact Webhook & Automation Workflow
+    AutomationEngine.processNewInquiry(savedInquiry, 'CONTACT_FORM').catch(err => {
+      console.error('Background contact automation error:', err);
+    });
+
+    // Audit Log
+    db.logAudit({
+      adminEmail: 'client@contact-page',
+      action: 'CONTACT_FORM_SUBMITTED',
+      targetType: 'INQUIRY',
+      targetId: savedInquiry.inquiryId,
+      details: `Contact form inquiry from ${resolvedName} (${resolvedCompany}) regarding ${resolvedService}.`,
+      ip: req.ip
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Thank you for reaching out to AHSAN AI LABS! We have successfully received your message and our team will get in touch with you shortly.',
+      inquiryId: savedInquiry.inquiryId,
+      inquiry: savedInquiry
+    });
+  } catch (err: any) {
+    console.error('Error in /api/contact:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to process your message. Please reach out directly on WhatsApp.'
+    });
+  }
+});
+
+// POST /api/inquiries (Client Project Order / Scope Submission with Honeypot & Anti-Spam Defense)
 app.post('/api/inquiries', inquiryRateLimiter, async (req: Request, res: Response) => {
   try {
     const {
       fullName,
+      name,
       companyName,
+      company,
       email,
       whatsapp,
+      phone,
       country,
       service,
       industry,
@@ -395,6 +584,7 @@ app.post('/api/inquiries', inquiryRateLimiter, async (req: Request, res: Respons
       timeline,
       budget,
       preferredContact,
+      source,
       hp_field // Honeypot trap field (must remain empty)
     } = req.body;
 
@@ -408,17 +598,27 @@ app.post('/api/inquiries', inquiryRateLimiter, async (req: Request, res: Respons
       });
     }
 
+    const resolvedName = (fullName || name || '').trim();
+    const resolvedCompany = (companyName || company || 'Direct Client').trim();
+    const resolvedEmail = (email || '').trim();
+    const resolvedWhatsApp = (whatsapp || phone || '').trim();
+    const resolvedProblem = (problem || '').trim();
+    const resolvedRequirements = (requirements || resolvedProblem).trim();
+    const resolvedService = (service || 'AI Agents') as any;
+    const resolvedCountry = (country || 'Global / Online').trim();
+    const resolvedSource = source || 'GET_STARTED_PAGE';
+
     // Input Validation
-    if (!fullName || !companyName || !email || !whatsapp || !country || !service || !problem || !requirements) {
+    if (!resolvedName || !resolvedEmail || (!resolvedProblem && !resolvedRequirements)) {
       return res.status(400).json({
         success: false,
-        message: 'Please complete all required fields (Name, Company, Email, WhatsApp, Country, Service, Problem description, and Requirements).'
+        message: 'Please complete all required fields (Name, Email, and Project Description).'
       });
     }
 
     // Email format check
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(resolvedEmail)) {
       return res.status(400).json({
         success: false,
         message: 'Please provide a valid email address.'
@@ -427,23 +627,25 @@ app.post('/api/inquiries', inquiryRateLimiter, async (req: Request, res: Respons
 
     // 1. Save to Database FIRST (MongoDB / Persistent Store)
     const savedInquiry = db.createInquiry({
-      fullName: fullName.trim(),
-      companyName: companyName.trim(),
-      email: email.trim(),
-      whatsapp: whatsapp.trim(),
-      country: country.trim(),
-      service,
+      fullName: resolvedName,
+      companyName: resolvedCompany,
+      email: resolvedEmail,
+      whatsapp: resolvedWhatsApp || 'Not provided',
+      country: resolvedCountry,
+      service: resolvedService,
       industry: industry ? industry.trim() : 'General',
       businessDescription: businessDescription ? businessDescription.trim() : '',
-      problem: problem.trim(),
-      requirements: requirements.trim(),
-      timeline: timeline || 'Flexible',
-      budget: budget || '',
-      preferredContact: preferredContact || 'WhatsApp'
+      problem: resolvedProblem || 'Project Scope Inquiry',
+      requirements: resolvedRequirements,
+      timeline: timeline || 'Within 2-4 Weeks',
+      budget: budget || 'Custom Scope',
+      preferredContact: (preferredContact as any) || 'WhatsApp',
+      source: resolvedSource
     });
 
     // 2. Trigger asynchronous, non-blocking n8n & notification automation
-    AutomationEngine.processNewInquiry(savedInquiry).catch(err => {
+    const isContact = resolvedSource === 'CONTACT_PAGE';
+    AutomationEngine.processNewInquiry(savedInquiry, isContact ? 'CONTACT_FORM' : 'ORDER_FORM').catch(err => {
       console.error('Background automation error:', err);
     });
 
@@ -453,7 +655,7 @@ app.post('/api/inquiries', inquiryRateLimiter, async (req: Request, res: Respons
       action: 'INQUIRY_SUBMITTED',
       targetType: 'INQUIRY',
       targetId: savedInquiry.inquiryId,
-      details: `New inquiry submitted by ${fullName} (${companyName}) for ${service}.`,
+      details: `New ${isContact ? 'Contact' : 'Project Scope'} inquiry submitted by ${resolvedName} (${resolvedCompany}) for ${resolvedService}.`,
       ip: req.ip
     });
 
@@ -1283,22 +1485,46 @@ app.post('/api/admin/import-data', requireAdminAuth, (req: AuthenticatedRequest,
 });
 
 app.post('/api/admin/test-webhook', requireAdminAuth, async (req: AuthenticatedRequest, res: Response) => {
-  const { url, secret } = req.body;
+  const { url, secret, type } = req.body;
   if (!url) {
     return res.status(400).json({ success: false, message: 'Webhook URL is required for testing.' });
   }
 
   try {
-    const testResult = await AutomationEngine.testWebhook(url, secret);
+    const testResult = await AutomationEngine.testWebhook(url, secret, type || 'GENERAL');
     db.logAudit({
       adminEmail: req.adminUser?.email || 'admin',
       action: 'WEBHOOK_TEST_EXECUTED',
       targetType: 'INTEGRATION',
-      details: `Dispatched test ping to ${url}. Result: HTTP ${testResult.status}`
+      details: `Dispatched ${type || 'GENERAL'} test ping to ${url}. Result: HTTP ${testResult.status}`
     });
     res.json({ success: true, data: testResult });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err?.message || 'Failed to ping webhook' });
+  }
+});
+
+// Dispatch live sample inquiry to n8n flow to test full workflow (Gmail + WhatsApp)
+app.post('/api/admin/test-sample-inquiry', requireAdminAuth, async (req: AuthenticatedRequest, res: Response) => {
+  const { type } = req.body;
+  try {
+    const flowType = type === 'CONTACT' ? 'CONTACT' : 'ORDER';
+    const result = await AutomationEngine.sendSampleInquiry(flowType);
+    
+    db.logAudit({
+      adminEmail: req.adminUser?.email || 'admin',
+      action: 'SAMPLE_INQUIRY_AUTOMATION_TESTED',
+      targetType: 'INTEGRATION',
+      details: `Dispatched full simulated ${flowType} inquiry payload to test n8n workflow.`
+    });
+
+    res.json({
+      success: true,
+      message: `Simulated ${flowType} inquiry payload dispatched successfully!`,
+      data: result
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err?.message || 'Failed to dispatch sample inquiry' });
   }
 });
 

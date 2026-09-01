@@ -51,6 +51,9 @@ export interface Inquiry {
   timeline: string;
   budget?: string;
   preferredContact: ContactMethod;
+  source?: 'CONTACT_PAGE' | 'GET_STARTED_PAGE' | 'MANUAL_ADMIN_ENTRY' | string;
+  subject?: string;
+  phone?: string;
   status: InquiryStatus;
   notificationStatus: NotificationStatus;
   notificationLogs: NotificationLog[];
@@ -164,8 +167,12 @@ export interface SiteSettings {
     facebook: string;
   };
   n8nWebhookUrl: string;
+  n8nContactWebhookUrl?: string;
+  n8nOrderWebhookUrl?: string;
   n8nWebhookSecret: string;
   n8nEnabled: boolean;
+  n8nContactEnabled?: boolean;
+  n8nOrderEnabled?: boolean;
   emailNotificationsEnabled: boolean;
   whatsappNotificationsEnabled: boolean;
   analyticsEnabled?: boolean;
