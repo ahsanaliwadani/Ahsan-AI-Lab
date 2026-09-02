@@ -13,9 +13,9 @@ export interface PageMetaConfig {
   ogImage?: string;
 }
 
-const BASE_URL = 'https://ahsanlab.qd.je';
-const DEFAULT_OG_IMAGE = 'https://ahsanlab.qd.je/og-preview.svg';
-const DEFAULT_LOGO_IMAGE = 'https://ahsanlab.qd.je/logo.jpg';
+const BASE_URL = 'https://ahsanailab.bond';
+const DEFAULT_OG_IMAGE = 'https://ahsanailab.bond/og-preview.svg';
+const DEFAULT_LOGO_IMAGE = 'https://ahsanailab.bond/logo.jpg';
 
 export const PAGE_SEO_MAP: Record<string, PageMetaConfig> = {
   '/': {

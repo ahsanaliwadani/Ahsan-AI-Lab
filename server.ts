@@ -37,7 +37,19 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader('X-Download-Options', 'noopen');
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://fonts.googleapis.com https://fonts.gstatic.com https://images.unsplash.com https://images.pexels.com; img-src 'self' data: blob: https:; connect-src 'self' https:; font-src 'self' data: https://fonts.gstatic.com; media-src 'self' https: data: blob:; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.loom.com https:;"
+    [
+      "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://*.cloudflareinsights.com https://*.cloudflare.com https://www.youtube.com https://s.ytimg.com https://www.google.com https://www.gstatic.com https://*.google-analytics.com https://*.googletagmanager.com https: blob:",
+      "script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://*.cloudflareinsights.com https://*.cloudflare.com https://www.youtube.com https://s.ytimg.com https://www.google.com https://www.gstatic.com https://*.google-analytics.com https://*.googletagmanager.com https: blob:",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https:",
+      "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https:",
+      "img-src 'self' data: blob: https: https://images.unsplash.com https://images.pexels.com https://*.cloudflare.com",
+      "connect-src 'self' https://cloudflareinsights.com https://*.cloudflareinsights.com https://*.cloudflare.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https: wss: ws:",
+      "font-src 'self' data: https://fonts.gstatic.com https:",
+      "media-src 'self' https: data: blob:",
+      "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.loom.com https:",
+      "worker-src 'self' blob:"
+    ].join('; ')
   );
 
   if (process.env.NODE_ENV === 'production') {
@@ -178,43 +190,43 @@ app.get('/sitemap.xml', (req: Request, res: Response) => {
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
   <url>
-    <loc>https://ahsanlab.qd.je/</loc>
+    <loc>https://ahsanailab.bond/</loc>
     <lastmod>${today}</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://ahsanlab.qd.je/services</loc>
+    <loc>https://ahsanailab.bond/services</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://ahsanlab.qd.je/demos</loc>
+    <loc>https://ahsanailab.bond/demos</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://ahsanlab.qd.je/get-started</loc>
+    <loc>https://ahsanailab.bond/get-started</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://ahsanlab.qd.je/about</loc>
+    <loc>https://ahsanailab.bond/about</loc>
     <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ahsanlab.qd.je/faq</loc>
+    <loc>https://ahsanailab.bond/faq</loc>
     <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ahsanlab.qd.je/contact</loc>
+    <loc>https://ahsanailab.bond/contact</loc>
     <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -247,7 +259,7 @@ Allow: /
 Disallow: /admin
 Disallow: /api/admin/
 
-Sitemap: https://ahsanlab.qd.je/sitemap.xml
+Sitemap: https://ahsanailab.bond/sitemap.xml
 `;
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=86400');
@@ -1482,6 +1494,70 @@ app.post('/api/admin/import-data', requireAdminAuth, (req: AuthenticatedRequest,
     details: 'Platform database restored from JSON backup.'
   });
   res.json({ success: true, message: 'Database restored successfully.' });
+});
+
+// MongoDB Status Endpoint
+app.get('/api/admin/database/status', requireAdminAuth, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const status = db.getMongoStatus();
+    const metrics = await db.getDatabaseMetrics();
+    res.json({ success: true, status, metrics });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: 'Failed to retrieve database status.' });
+  }
+});
+
+// Test MongoDB Live Connectivity & Latency
+app.post('/api/admin/database/test', requireAdminAuth, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { uri, dbName } = req.body;
+    const result = await db.testMongoConnection(uri, dbName);
+    db.logAudit({
+      adminEmail: req.adminUser?.email || 'admin',
+      action: 'MONGODB_CONNECTIVITY_TESTED',
+      targetType: 'DATABASE',
+      details: `Tested MongoDB connection (${result.databaseName}). Status: ${result.success ? 'SUCCESS (' + result.latencyMs + 'ms)' : 'FAILED'}`
+    });
+    res.json({ success: true, data: result });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err?.message || 'Database test failed.' });
+  }
+});
+
+// Reconnect MongoDB with optional new URI
+app.post('/api/admin/database/reconnect', requireAdminAuth, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { uri, dbName } = req.body;
+    const connected = await db.reconnectMongo(uri, dbName);
+    db.logAudit({
+      adminEmail: req.adminUser?.email || 'admin',
+      action: 'MONGODB_RECONNECTED',
+      targetType: 'DATABASE',
+      details: `Reconnection attempt ${connected ? 'SUCCEEDED' : 'FAILED'} for DB: ${dbName || 'AHSAN_AI_LABS'}`
+    });
+    res.json({
+      success: connected,
+      message: connected ? 'MongoDB reconnected and synchronized successfully.' : 'Could not connect to MongoDB. Reverting to local store fallback.'
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err?.message || 'Failed to reconnect.' });
+  }
+});
+
+// Force Sync local store to MongoDB
+app.post('/api/admin/database/sync', requireAdminAuth, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const syncResult = await db.forceSyncToMongo();
+    db.logAudit({
+      adminEmail: req.adminUser?.email || 'admin',
+      action: 'DATABASE_FORCE_SYNCED',
+      targetType: 'DATABASE',
+      details: `Manual sync triggered. ${syncResult.success ? 'Synced all collections.' : 'Sync failed.'}`
+    });
+    res.json(syncResult);
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err?.message || 'Sync failed.' });
+  }
 });
 
 app.post('/api/admin/test-webhook', requireAdminAuth, async (req: AuthenticatedRequest, res: Response) => {

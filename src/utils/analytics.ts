@@ -66,21 +66,25 @@ const getDeviceDetails = () => {
 // Internal safe dispatcher
 const sendTelemetry = async (endpoint: string, payload: any) => {
   try {
-    // Use navigator.sendBeacon when available for unload safety, or standard fetch
-    if (typeof navigator !== 'undefined' && navigator.sendBeacon && endpoint === '/api/analytics/event') {
+    // Use navigator.sendBeacon when available for unload safety and low-overhead tracking
+    if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
       const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-      navigator.sendBeacon(endpoint, blob);
-      return;
+      const queued = navigator.sendBeacon(endpoint, blob);
+      if (queued) return;
     }
 
-    fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      keepalive: true
-    }).catch(() => {
-      // Fail silently to never degrade user experience
-    });
+    // Fallback to fetch with graceful silent error handling
+    if (typeof fetch !== 'undefined') {
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        keepalive: true,
+        credentials: 'same-origin'
+      }).catch(() => {
+        // Fail silently so that network/SSL issues on custom domains never degrade UX
+      });
+    }
   } catch (err) {
     // Fail silently
   }
@@ -250,13 +254,15 @@ export const initErrorReporter = () => {
 
   window.addEventListener('error', (event) => {
     const msg = event.message || '';
-    // Avoid noise from cross-origin scripts, resize observer loops, or Vite dev HMR websockets
+    // Avoid noise from cross-origin scripts, network/cert errors, resize observer loops, or Vite dev HMR websockets
     if (
       msg.includes('ResizeObserver') || 
       msg.includes('Script error.') ||
       msg.toLowerCase().includes('websocket') ||
       msg.includes('[vite]') ||
-      msg.includes('closed without opened')
+      msg.includes('closed without opened') ||
+      msg.includes('ERR_CERT') ||
+      msg.includes('Failed to fetch')
     ) {
       return;
     }

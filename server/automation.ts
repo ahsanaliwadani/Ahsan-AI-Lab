@@ -53,7 +53,7 @@ Our AI engineering team has received your query and will get in touch with you s
 *${inquiry.inquiryId}*
 
 💬 *Direct Support WhatsApp:*
-+92 344 6899742 | https://ahsanlab.qd.je
++92 344 6899742 | https://ahsanailab.bond
 
 _Intelligence. Automation. Innovation._`;
 
@@ -70,7 +70,7 @@ Thank you for submitting your project consultation request to *AHSAN AI LABS*!
 
 Our Lead AI Architect (*Ahsan Ali*) and team are reviewing your technical requirements. We will connect with you via *${inquiry.preferredContact}* within 4 to 24 business hours to share live architecture demos and discuss deployment.
 
-🌐 *Website:* https://ahsanlab.qd.je
+🌐 *Website:* https://ahsanailab.bond
 💬 *Direct WhatsApp:* +92 344 6899742
 
 _AHSAN AI LABS — Autonomous AI Systems & Enterprise Automation_`;
@@ -130,13 +130,13 @@ _AHSAN AI LABS — Autonomous AI Systems & Enterprise Automation_`;
 
       <div style="text-align: center;">
         <a href="https://wa.me/923446899742?text=${encodeURIComponent(`Hello Ahsan AI Labs team, I submitted an inquiry with Reference ID ${inquiry.inquiryId}.`)}" class="button">
-          Chat Directly on WhatsApp
+           Chat Directly on WhatsApp
         </a>
       </div>
     </div>
     <div class="footer">
       AHSAN AI LABS • Global AI & Automation Systems<br>
-      Website: <a href="https://ahsanlab.qd.je" style="color: #38bdf8;">ahsanlab.qd.je</a> • WhatsApp: +92 344 6899742
+      Website: <a href="https://ahsanailab.bond" style="color: #38bdf8;">ahsanailab.bond</a> • WhatsApp: +92 344 6899742
     </div>
   </div>
 </body>
@@ -167,7 +167,7 @@ ${inquiry.requirements}
 https://wa.me/${inquiry.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello ${inquiry.fullName}, Ahsan from AHSAN AI LABS here regarding your inquiry for ${inquiry.service}.`)}
 
 🖥️ *Open in Admin CRM:*
-https://ahsanlab.qd.je/admin`;
+https://ahsanailab.bond/admin`;
 
     const adminEmailSubject = `[NEW LEAD] ${isContactForm ? 'Contact Message' : 'Project Order'} — ${inquiry.service} — ${inquiry.fullName} (${inquiry.companyName}) [${inquiry.inquiryId}]`;
 
@@ -221,7 +221,7 @@ https://ahsanlab.qd.je/admin`;
 
       <div style="margin-top: 24px;">
         <a href="https://wa.me/${inquiry.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello ${inquiry.fullName}, Ahsan from AHSAN AI LABS here regarding your inquiry for ${inquiry.service}.`)}" class="btn btn-wa">Direct WhatsApp Message</a>
-        <a href="http://www.ahsanlab.qd.je/admin" class="btn btn-crm">Open Admin CRM</a>
+        <a href="https://ahsanailab.bond/admin" class="btn btn-crm">Open Admin CRM</a>
       </div>
     </div>
   </div>
@@ -306,8 +306,8 @@ https://ahsanlab.qd.je/admin`;
       meta: {
         sourcePortal: 'AHSAN AI LABS Production Web Portal',
         environment: process.env.NODE_ENV || 'production',
-        siteUrl: settings.siteUrl || 'http://www.ahsanlab.qd.je',
-        adminCrmUrl: `${settings.siteUrl || 'http://www.ahsanlab.qd.je'}/admin`
+        siteUrl: settings.siteUrl || 'https://ahsanailab.bond',
+        adminCrmUrl: `${settings.siteUrl || 'https://ahsanailab.bond'}/admin`
       }
     };
 

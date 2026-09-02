@@ -209,9 +209,154 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [copiedN8nJson, setCopiedN8nJson] = useState(false);
   const [settingsSavedMessage, setSettingsSavedMessage] = useState('');
 
+  // Database Diagnostics & Sync State
+  const [dbStatus, setDbStatus] = useState<{
+    connected: boolean;
+    mode: string;
+    databaseName: string;
+    maskedUri: string;
+    isConfigured: boolean;
+  } | null>(null);
+  const [dbMetrics, setDbMetrics] = useState<any>(null);
+  const [isTestingDb, setIsTestingDb] = useState(false);
+  const [dbTestResult, setDbTestResult] = useState<any>(null);
+  const [isSyncingDb, setIsSyncingDb] = useState(false);
+  const [dbSyncResult, setDbSyncResult] = useState<any>(null);
+  const [isReconnectingDb, setIsReconnectingDb] = useState(false);
+  const [customMongoUri, setCustomMongoUri] = useState('');
+  const [customDbName, setCustomDbName] = useState('');
+  const [dbActionMsg, setDbActionMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [copiedBashCmd, setCopiedBashCmd] = useState<string | null>(null);
+  const [isImportingData, setIsImportingData] = useState(false);
+  const [importStatusMsg, setImportStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   const authHeaders = {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'
+  };
+
+  const fetchDbStatus = async () => {
+    try {
+      const res = await fetch('/api/admin/database/status', { headers: authHeaders });
+      if (res.ok) {
+        const d = await res.json();
+        setDbStatus(d.status);
+        setDbMetrics(d.metrics);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch DB status');
+    }
+  };
+
+  const handleTestDatabase = async () => {
+    setIsTestingDb(true);
+    setDbTestResult(null);
+    try {
+      const res = await fetch('/api/admin/database/test', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          uri: customMongoUri.trim() || undefined,
+          dbName: customDbName.trim() || undefined
+        })
+      });
+      const data = await res.json();
+      setDbTestResult(data.data || { success: false, message: data.message });
+      fetchDbStatus();
+    } catch (err: any) {
+      setDbTestResult({ success: false, message: err.message || 'Connection test failed' });
+    } finally {
+      setIsTestingDb(false);
+    }
+  };
+
+  const handleSyncDatabase = async () => {
+    setIsSyncingDb(true);
+    setDbSyncResult(null);
+    try {
+      const res = await fetch('/api/admin/database/sync', {
+        method: 'POST',
+        headers: authHeaders
+      });
+      const data = await res.json();
+      setDbSyncResult(data);
+      if (data.success) {
+        setDbActionMsg({ type: 'success', text: data.message });
+      } else {
+        setDbActionMsg({ type: 'error', text: data.message });
+      }
+      fetchDbStatus();
+    } catch (err: any) {
+      setDbActionMsg({ type: 'error', text: err.message || 'Sync failed' });
+    } finally {
+      setIsSyncingDb(false);
+    }
+  };
+
+  const handleReconnectDatabase = async () => {
+    setIsReconnectingDb(true);
+    try {
+      const res = await fetch('/api/admin/database/reconnect', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          uri: customMongoUri.trim() || undefined,
+          dbName: customDbName.trim() || undefined
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDbActionMsg({ type: 'success', text: data.message });
+        setCustomMongoUri('');
+        setCustomDbName('');
+      } else {
+        setDbActionMsg({ type: 'error', text: data.message });
+      }
+      fetchDbStatus();
+    } catch (err: any) {
+      setDbActionMsg({ type: 'error', text: err.message || 'Reconnect failed' });
+    } finally {
+      setIsReconnectingDb(false);
+    }
+  };
+
+  const handleImportDatabaseFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImportingData(true);
+    setImportStatusMsg(null);
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const jsonContent = JSON.parse(event.target?.result as string);
+        const res = await fetch('/api/admin/import-data', {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify(jsonContent)
+        });
+        const d = await res.json();
+        if (d.success) {
+          setImportStatusMsg({ type: 'success', text: 'Database successfully restored from JSON backup!' });
+          fetchAllData();
+          fetchDbStatus();
+        } else {
+          setImportStatusMsg({ type: 'error', text: d.message || 'Restore failed' });
+        }
+      } catch (err: any) {
+        setImportStatusMsg({ type: 'error', text: 'Invalid JSON backup file format.' });
+      } finally {
+        setIsImportingData(false);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedBashCmd(id);
+    setTimeout(() => setCopiedBashCmd(null), 2500);
   };
 
   const fetchAllData = async () => {
@@ -269,6 +414,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         const d = await audRes.json();
         setAuditLogs(d.data || []);
       }
+      fetchDbStatus();
     } catch (err) {
       console.error('Failed to load admin data:', err);
     } finally {
@@ -505,7 +651,7 @@ When would be a convenient time for a quick 15-minute technical discovery call t
 Best regards,
 Ahsan Ali
 Founder & Principal AI Systems Architect
-AHSAN AI LABS | http://www.ahsanlab.qd.je
+AHSAN AI LABS | https://ahsanailab.bond
 WhatsApp: +92 344 6899742`;
 
     setProposalText(draft);
@@ -3550,11 +3696,250 @@ WhatsApp: +92 344 6899742`;
                     <label className="text-slate-300 font-medium">Website Domain URL</label>
                     <input
                       type="url"
-                      placeholder="http://www.ahsanlab.qd.je"
-                      value={settings.siteUrl || 'http://www.ahsanlab.qd.je'}
+                      placeholder="https://ahsanailab.bond"
+                      value={settings.siteUrl || 'https://ahsanailab.bond'}
                       onChange={(e) => setSettings({ ...settings, siteUrl: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs"
                     />
+                  </div>
+                </div>
+              </div>
+
+              {/* Database Persistence & MongoDB Engine Management Section */}
+              <div className="space-y-4 pt-4 border-t border-slate-800">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center space-x-2 text-cyan-400 font-bold uppercase tracking-wider text-xs">
+                    <Database className="w-4 h-4 text-cyan-400" />
+                    <span>Database Engine & MongoDB Synchronization Center</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className={`text-[10px] px-2.5 py-1 rounded-full font-mono font-bold border flex items-center space-x-1.5 ${
+                      dbStatus?.connected
+                        ? 'bg-emerald-950/80 text-emerald-400 border-emerald-700/80'
+                        : 'bg-amber-950/80 text-amber-300 border-amber-700/80'
+                    }`}>
+                      <span className={`w-2 h-2 rounded-full ${dbStatus?.connected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
+                      <span>{dbStatus?.connected ? 'MONGODB CONNECTED' : 'LOCAL ATOMIC STORE (db.json)'}</span>
+                    </span>
+                  </div>
+                </div>
+
+                {dbActionMsg && (
+                  <div className={`p-3.5 rounded-xl text-xs flex items-center justify-between ${
+                    dbActionMsg.type === 'success'
+                      ? 'bg-emerald-950/90 text-emerald-300 border border-emerald-800'
+                      : 'bg-red-950/90 text-red-300 border border-red-800'
+                  }`}>
+                    <span>{dbActionMsg.text}</span>
+                    <button type="button" onClick={() => setDbActionMsg(null)} className="text-slate-400 hover:text-white">✕</button>
+                  </div>
+                )}
+
+                {/* Primary Database Diagnostics Card */}
+                <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800/90 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                      <div className="text-[10px] uppercase text-slate-400 font-semibold tracking-wider">Active Storage Engine</div>
+                      <div className="text-white font-bold font-mono truncate">{dbStatus?.mode || 'Loading engine...'}</div>
+                      <div className="text-[10px] text-slate-400">Database Name: <span className="text-cyan-400 font-mono font-semibold">{dbStatus?.databaseName || 'AHSAN_AI_LABS'}</span></div>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                      <div className="text-[10px] uppercase text-slate-400 font-semibold tracking-wider">Connection URI</div>
+                      <div className="text-white font-mono text-[11px] truncate">{dbStatus?.maskedUri || 'mongodb://127.0.0.1:27017/AHSAN_AI_LABS'}</div>
+                      <div className="text-[10px] text-emerald-400 font-medium">Dual-write fallback protection: Active</div>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                      <div className="text-[10px] uppercase text-slate-400 font-semibold tracking-wider">Total Stored Records</div>
+                      <div className="text-white font-bold text-sm">
+                        {dbMetrics?.totalDocuments ?? (inquiries.length + services.length + demos.length + faqs.length + auditLogs.length)} items
+                      </div>
+                      <div className="text-[10px] text-slate-400">Inquiries: {inquiries.length} • Services: {services.length} • Demos: {demos.length}</div>
+                    </div>
+                  </div>
+
+                  {/* Actions Row */}
+                  <div className="flex flex-wrap items-center gap-2.5 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleTestDatabase}
+                      disabled={isTestingDb}
+                      className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white font-bold text-xs flex items-center space-x-2 shadow-md shadow-cyan-600/20"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isTestingDb ? 'animate-spin' : ''}`} />
+                      <span>{isTestingDb ? 'Testing Connection...' : 'Test MongoDB Connection'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleSyncDatabase}
+                      disabled={isSyncingDb}
+                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs flex items-center space-x-2 shadow-md shadow-blue-600/20"
+                    >
+                      <Zap className={`w-3.5 h-3.5 ${isSyncingDb ? 'animate-spin' : ''}`} />
+                      <span>{isSyncingDb ? 'Syncing to MongoDB...' : 'Force Sync to MongoDB'}</span>
+                    </button>
+
+                    <a
+                      href="/api/admin/export-data"
+                      download
+                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center space-x-2 border border-slate-700"
+                    >
+                      <FileDown className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Download JSON Backup</span>
+                    </a>
+
+                    <label className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center space-x-2 border border-slate-700 cursor-pointer">
+                      <Upload className="w-3.5 h-3.5 text-purple-400" />
+                      <span>{isImportingData ? 'Restoring...' : 'Restore from JSON File'}</span>
+                      <input
+                        type="file"
+                        accept=".json"
+                        onChange={handleImportDatabaseFile}
+                        disabled={isImportingData}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  {/* Test Result Box */}
+                  {dbTestResult && (
+                    <div className={`p-4 rounded-xl text-xs space-y-2 border ${
+                      dbTestResult.success
+                        ? 'bg-emerald-950/70 border-emerald-800 text-emerald-200'
+                        : 'bg-red-950/70 border-red-800 text-red-200'
+                    }`}>
+                      <div className="flex items-center space-x-2 font-bold">
+                        {dbTestResult.success ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertCircle className="w-4 h-4 text-red-400" />}
+                        <span>{dbTestResult.success ? 'MongoDB Connection Succeeded' : 'MongoDB Connection Failed'}</span>
+                      </div>
+                      <p className="text-slate-300 leading-relaxed">{dbTestResult.message}</p>
+                      {dbTestResult.collections && (
+                        <div className="flex flex-wrap gap-2 pt-1 font-mono text-[11px]">
+                          {dbTestResult.collections.map((c: any) => (
+                            <span key={c.name} className="px-2 py-0.5 rounded bg-slate-900/80 border border-slate-700 text-cyan-300">
+                              {c.name}: <b>{c.count}</b>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {importStatusMsg && (
+                    <div className={`p-3 rounded-xl text-xs ${
+                      importStatusMsg.type === 'success' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-red-950 text-red-300 border border-red-800'
+                    }`}>
+                      {importStatusMsg.text}
+                    </div>
+                  )}
+                </div>
+
+                {/* MongoDB Reconnection & URI Configuration */}
+                <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                  <div className="text-slate-200 font-bold text-xs uppercase tracking-wider">
+                    Custom MongoDB Connection String (Optional Reconnect)
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    If you are running MongoDB on a custom port, MongoDB Atlas, or remote server, enter the connection string below to test and connect dynamically without restarting the server.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-2 space-y-1">
+                      <label className="text-slate-300 font-medium text-[11px]">MongoDB URI</label>
+                      <input
+                        type="text"
+                        placeholder="mongodb://127.0.0.1:27017/AHSAN_AI_LABS"
+                        value={customMongoUri}
+                        onChange={(e) => setCustomMongoUri(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-mono text-xs focus:border-cyan-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-slate-300 font-medium text-[11px]">Database Name</label>
+                      <input
+                        type="text"
+                        placeholder="AHSAN_AI_LABS"
+                        value={customDbName}
+                        onChange={(e) => setCustomDbName(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-mono text-xs focus:border-cyan-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="button"
+                      onClick={handleReconnectDatabase}
+                      disabled={isReconnectingDb}
+                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center space-x-2 shadow-md shadow-emerald-600/20"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isReconnectingDb ? 'animate-spin' : ''}`} />
+                      <span>{isReconnectingDb ? 'Connecting...' : 'Apply & Connect to MongoDB'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Server Quick-Fix Commands Cheat Sheet */}
+                <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2 text-yellow-400 font-bold text-xs uppercase tracking-wider">
+                      <Cpu className="w-4 h-4 text-yellow-400" />
+                      <span>Server MongoDB Diagnostic & Setup Commands</span>
+                    </div>
+                    <span className="text-[10px] text-slate-400">Run on your Linux VPS terminal</span>
+                  </div>
+
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    If MongoDB is stopped on your VPS server, use these one-click copy commands to verify status or install/repair MongoDB 7.0 automatically:
+                  </p>
+
+                  <div className="space-y-2 text-xs font-mono">
+                    <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-3">
+                      <div className="truncate">
+                        <span className="text-slate-500 mr-2"># 1. Check & Auto-Recover MongoDB:</span>
+                        <span className="text-cyan-300">./scripts/check-mongodb.sh</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard('./scripts/check-mongodb.sh', 'cmd1')}
+                        className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] shrink-0 flex items-center space-x-1"
+                      >
+                        {copiedBashCmd === 'cmd1' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedBashCmd === 'cmd1' ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-3">
+                      <div className="truncate">
+                        <span className="text-slate-500 mr-2"># 2. 1-Command MongoDB Installer:</span>
+                        <span className="text-cyan-300">sudo ./scripts/setup-mongodb.sh</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard('sudo ./scripts/setup-mongodb.sh', 'cmd2')}
+                        className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] shrink-0 flex items-center space-x-1"
+                      >
+                        {copiedBashCmd === 'cmd2' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedBashCmd === 'cmd2' ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-3">
+                      <div className="truncate">
+                        <span className="text-slate-500 mr-2"># 3. Restart MongoDB Service:</span>
+                        <span className="text-cyan-300">sudo systemctl restart mongod && sudo systemctl status mongod</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard('sudo systemctl restart mongod && sudo systemctl status mongod', 'cmd3')}
+                        className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] shrink-0 flex items-center space-x-1"
+                      >
+                        {copiedBashCmd === 'cmd3' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedBashCmd === 'cmd3' ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

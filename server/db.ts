@@ -35,6 +35,7 @@ import {
 // Storage paths for local JSON persistence fallback if MongoDB is not connected
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
+const DB_BACKUP_FILE = path.join(DATA_DIR, 'db.json.bak');
 
 export interface ApiLatencyRecord {
   path: string;
@@ -488,7 +489,7 @@ const initialSettings: SiteSettings = {
   companyName: 'AHSAN AI LABS',
   tagline: 'INTELLIGENCE. AUTOMATION. INNOVATION.',
   logoText: 'AHSAN AI LABS',
-  siteUrl: 'https://ahsanlab.qd.je',
+  siteUrl: 'https://ahsanailab.bond',
   primaryEmail: 'contact@ahsanailabs.com',
   supportWhatsApp: '+92 344 6899742',
   whatsappDirectNumber: '923446899742',
@@ -540,7 +541,7 @@ class DatabaseService {
 
   /**
    * Connects to MongoDB when MONGODB_URI is provided.
-   * Creates collections and performance indexes.
+   * Restores existing state from MongoDB collections or populates them safely.
    */
   private async initializeMongo() {
     const uri = process.env.MONGODB_URI;
@@ -575,24 +576,115 @@ class DatabaseService {
       const demosCol = this.mongoDb.collection('demos');
       await demosCol.createIndex({ category: 1 });
 
+      const faqsCol = this.mongoDb.collection('faqs');
+      await faqsCol.createIndex({ category: 1 });
+
       const auditCol = this.mongoDb.collection('audit_logs');
       await auditCol.createIndex({ timestamp: -1 });
 
-      // Synchronize in-memory / local state into MongoDB if empty
+      const settingsCol = this.mongoDb.collection('settings');
+      const contentCol = this.mongoDb.collection('content');
+      const adminsCol = this.mongoDb.collection('admins');
+
+      let stateModifiedFromMongo = false;
+
+      // 1. Synchronize Settings from MongoDB (MongoDB takes precedence if exists)
+      const mongoSettings = await settingsCol.findOne({ _id: 'global_settings' as any });
+      if (mongoSettings) {
+        const { _id, ...rest } = mongoSettings as any;
+        this.state.settings = { ...this.state.settings, ...rest };
+        stateModifiedFromMongo = true;
+      } else {
+        await settingsCol.replaceOne(
+          { _id: 'global_settings' as any },
+          { _id: 'global_settings' as any, ...this.state.settings },
+          { upsert: true }
+        );
+      }
+
+      // 2. Synchronize Content from MongoDB
+      const mongoContent = await contentCol.findOne({ _id: 'global_content' as any });
+      if (mongoContent) {
+        const { _id, ...rest } = mongoContent as any;
+        this.state.content = { ...this.state.content, ...rest };
+        stateModifiedFromMongo = true;
+      } else {
+        await contentCol.replaceOne(
+          { _id: 'global_content' as any },
+          { _id: 'global_content' as any, ...this.state.content },
+          { upsert: true }
+        );
+      }
+
+      // 3. Synchronize Inquiries from MongoDB
       const inqCount = await inquiriesCol.countDocuments();
-      if (inqCount === 0 && this.state.inquiries.length > 0) {
+      if (inqCount > 0) {
+        const mongoInquiries = await inquiriesCol.find().sort({ createdAt: -1 }).toArray();
+        this.state.inquiries = mongoInquiries.map(i => {
+          const { _id, ...rest } = i as any;
+          return { _id: _id.toString(), ...rest };
+        });
+        stateModifiedFromMongo = true;
+      } else if (this.state.inquiries.length > 0) {
         await inquiriesCol.insertMany(this.state.inquiries as any);
       }
 
+      // 4. Synchronize Services from MongoDB
       const srvCount = await servicesCol.countDocuments();
-      if (srvCount === 0) {
-        await servicesCol.insertMany(this.state.services as any);
-      } else {
-        const mongoServices = await servicesCol.find().toArray();
+      if (srvCount > 0) {
+        const mongoServices = await servicesCol.find().sort({ displayOrder: 1 }).toArray();
         this.state.services = mongoServices.map(s => {
           const { _id, ...rest } = s as any;
           return { _id: _id.toString(), ...rest };
         });
+        stateModifiedFromMongo = true;
+      } else if (this.state.services.length > 0) {
+        await servicesCol.insertMany(this.state.services as any);
+      }
+
+      // 5. Synchronize Demos from MongoDB
+      const demoCount = await demosCol.countDocuments();
+      if (demoCount > 0) {
+        const mongoDemos = await demosCol.find().sort({ displayOrder: 1 }).toArray();
+        this.state.demos = mongoDemos.map(d => {
+          const { _id, ...rest } = d as any;
+          return { _id: _id.toString(), ...rest };
+        });
+        stateModifiedFromMongo = true;
+      } else if (this.state.demos.length > 0) {
+        await demosCol.insertMany(this.state.demos as any);
+      }
+
+      // 6. Synchronize FAQs from MongoDB
+      const faqCount = await faqsCol.countDocuments();
+      if (faqCount > 0) {
+        const mongoFaqs = await faqsCol.find().sort({ displayOrder: 1 }).toArray();
+        this.state.faqs = mongoFaqs.map(f => {
+          const { _id, ...rest } = f as any;
+          return { _id: _id.toString(), ...rest };
+        });
+        stateModifiedFromMongo = true;
+      } else if (this.state.faqs.length > 0) {
+        await faqsCol.insertMany(this.state.faqs as any);
+      }
+
+      // 7. Synchronize Admins from MongoDB
+      const adminCount = await adminsCol.countDocuments();
+      if (adminCount > 0) {
+        const mongoAdmins = await adminsCol.find().toArray();
+        this.state.admins = mongoAdmins.map(a => {
+          const { _id, ...rest } = a as any;
+          return { _id: _id.toString(), ...rest };
+        });
+        stateModifiedFromMongo = true;
+      } else if (this.state.admins.length > 0) {
+        await adminsCol.insertMany(this.state.admins as any);
+      }
+
+      // If MongoDB loaded updated data, mirror it to local disk cache
+      if (stateModifiedFromMongo) {
+        this.saveStateToDisk(this.state);
+        console.log('[Database] Synchronized live production data from MongoDB to memory & local backup store.');
       }
 
     } catch (err: any) {
@@ -602,11 +694,232 @@ class DatabaseService {
   }
 
   public getMongoStatus() {
+    const rawUri = process.env.MONGODB_URI || '';
+    const maskedUri = rawUri ? rawUri.replace(/:\/\/([^:]+):([^@]+)@/, '://$1:••••••@') : 'Not Configured';
     return {
       connected: this.isMongoConnected,
-      mode: this.isMongoConnected ? 'MongoDB (Production Cluster)' : 'Local Persistent Storage (db.json)',
-      databaseName: process.env.DATABASE_NAME || 'AHSAN_AI_LABS'
+      mode: this.isMongoConnected ? 'MongoDB (Production Enterprise Cluster)' : 'Local Atomic Filesystem Engine (db.json)',
+      databaseName: process.env.DATABASE_NAME || 'AHSAN_AI_LABS',
+      maskedUri,
+      isConfigured: !!rawUri
     };
+  }
+
+  /**
+   * Tests MongoDB connectivity on demand and executes live latency & write test.
+   */
+  public async testMongoConnection(testUri?: string, testDbName?: string): Promise<{
+    success: boolean;
+    latencyMs: number;
+    databaseName: string;
+    message: string;
+    serverInfo?: any;
+    collections?: { name: string; count: number }[];
+    writeCheckPassed: boolean;
+  }> {
+    const uri = testUri || process.env.MONGODB_URI;
+    const dbName = testDbName || process.env.DATABASE_NAME || 'AHSAN_AI_LABS';
+
+    if (!uri) {
+      return {
+        success: false,
+        latencyMs: 0,
+        databaseName: dbName,
+        message: 'No MONGODB_URI configured. Set MONGODB_URI in your .env or server environment.',
+        writeCheckPassed: false
+      };
+    }
+
+    const start = Date.now();
+    let tempClient: MongoClient | null = null;
+    try {
+      tempClient = new MongoClient(uri, {
+        connectTimeoutMS: 5000,
+        serverSelectionTimeoutMS: 5000
+      });
+
+      await tempClient.connect();
+      const db = tempClient.db(dbName);
+      
+      // Ping
+      await db.command({ ping: 1 });
+      const latencyMs = Date.now() - start;
+
+      // Write test
+      const testCol = db.collection('_health_ping_test');
+      const testDoc = { testId: 'ping_' + Date.now(), createdAt: new Date() };
+      await testCol.insertOne(testDoc);
+      await testCol.deleteOne({ testId: testDoc.testId });
+
+      // Gather collection count stats
+      const inqCount = await db.collection('inquiries').countDocuments().catch(() => 0);
+      const srvCount = await db.collection('services').countDocuments().catch(() => 0);
+      const demCount = await db.collection('demos').countDocuments().catch(() => 0);
+      const faqCount = await db.collection('faqs').countDocuments().catch(() => 0);
+      const audCount = await db.collection('audit_logs').countDocuments().catch(() => 0);
+
+      await tempClient.close();
+
+      return {
+        success: true,
+        latencyMs,
+        databaseName: dbName,
+        message: `Connected successfully to MongoDB database "${dbName}" in ${latencyMs}ms. Read & write tests verified.`,
+        writeCheckPassed: true,
+        collections: [
+          { name: 'inquiries', count: inqCount },
+          { name: 'services', count: srvCount },
+          { name: 'demos', count: demCount },
+          { name: 'faqs', count: faqCount },
+          { name: 'audit_logs', count: audCount }
+        ]
+      };
+    } catch (err: any) {
+      if (tempClient) {
+        await tempClient.close().catch(() => {});
+      }
+      return {
+        success: false,
+        latencyMs: Date.now() - start,
+        databaseName: dbName,
+        message: `MongoDB connection error: ${err?.message || err}`,
+        writeCheckPassed: false
+      };
+    }
+  }
+
+  /**
+   * Reconnects to MongoDB dynamically without server restart.
+   */
+  public async reconnectMongo(newUri?: string, newDbName?: string): Promise<boolean> {
+    if (newUri) process.env.MONGODB_URI = newUri;
+    if (newDbName) process.env.DATABASE_NAME = newDbName;
+
+    try {
+      if (this.mongoClient) {
+        await this.mongoClient.close().catch(() => {});
+      }
+      this.isMongoConnected = false;
+      this.mongoClient = null;
+      this.mongoDb = null;
+
+      await this.initializeMongo();
+      return this.isMongoConnected;
+    } catch (err) {
+      console.error('[Database] Reconnect failed:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Forces full database synchronization between local store and MongoDB.
+   */
+  public async forceSyncToMongo(): Promise<{ success: boolean; syncedItems: Record<string, number>; message: string }> {
+    if (!this.isMongoConnected || !this.mongoDb) {
+      // Attempt reconnect first
+      const connected = await this.reconnectMongo();
+      if (!connected || !this.mongoDb) {
+        return {
+          success: false,
+          syncedItems: {},
+          message: 'MongoDB is not currently connected. Please verify MONGODB_URI and MongoDB server status.'
+        };
+      }
+    }
+
+    try {
+      const db = this.mongoDb;
+
+      // 1. Settings
+      await db.collection('settings').replaceOne(
+        { _id: 'global_settings' as any },
+        { _id: 'global_settings' as any, ...this.state.settings },
+        { upsert: true }
+      );
+
+      // 2. Content
+      await db.collection('content').replaceOne(
+        { _id: 'global_content' as any },
+        { _id: 'global_content' as any, ...this.state.content },
+        { upsert: true }
+      );
+
+      // 3. Inquiries
+      for (const inq of this.state.inquiries) {
+        await db.collection('inquiries').replaceOne(
+          { inquiryId: inq.inquiryId },
+          { ...inq },
+          { upsert: true }
+        );
+      }
+
+      // 4. Services
+      for (const srv of this.state.services) {
+        await db.collection('services').replaceOne(
+          { slug: srv.slug },
+          { ...srv },
+          { upsert: true }
+        );
+      }
+
+      // 5. Demos
+      for (const demo of this.state.demos) {
+        await db.collection('demos').replaceOne(
+          { _id: demo._id as any },
+          { ...demo },
+          { upsert: true }
+        );
+      }
+
+      // 6. FAQs
+      for (const faq of this.state.faqs) {
+        await db.collection('faqs').replaceOne(
+          { _id: faq._id as any },
+          { ...faq },
+          { upsert: true }
+        );
+      }
+
+      // 7. Admins
+      for (const admin of this.state.admins) {
+        await db.collection('admins').replaceOne(
+          { email: admin.email },
+          { ...admin },
+          { upsert: true }
+        );
+      }
+
+      // 8. Audit logs
+      for (const log of (this.state.auditLogs || []).slice(0, 50)) {
+        await db.collection('audit_logs').replaceOne(
+          { _id: log._id as any },
+          { ...log },
+          { upsert: true }
+        );
+      }
+
+      const synced = {
+        inquiries: this.state.inquiries.length,
+        services: this.state.services.length,
+        demos: this.state.demos.length,
+        faqs: this.state.faqs.length,
+        admins: this.state.admins.length,
+        settings: 1,
+        content: 1
+      };
+
+      return {
+        success: true,
+        syncedItems: synced,
+        message: 'All application records and custom settings successfully synchronized to MongoDB.'
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        syncedItems: {},
+        message: `Sync failed: ${err?.message || err}`
+      };
+    }
   }
 
   private loadState(): DatabaseState {
@@ -615,27 +928,63 @@ class DatabaseService {
         fs.mkdirSync(DATA_DIR, { recursive: true });
       }
 
+      // 1. Primary: load from db.json
       if (fs.existsSync(DB_FILE)) {
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
-        const parsed = JSON.parse(raw);
-        return {
-          inquiries: parsed.inquiries || initialInquiries,
-          services: parsed.services || initialServices,
-          demos: parsed.demos || initialDemos,
-          faqs: parsed.faqs || initialFaqs,
-          content: parsed.content || initialContent,
-          settings: parsed.settings || initialSettings,
-          auditLogs: parsed.auditLogs || [],
-          admins: parsed.admins || this.getDefaultAdmins(),
-          analyticsEvents: parsed.analyticsEvents || [],
-          webVitals: parsed.webVitals || [],
-          errorLogs: parsed.errorLogs || [],
-          uptimeChecks: parsed.uptimeChecks || [],
-          systemAlerts: parsed.systemAlerts || []
-        };
+        if (raw && raw.trim().length > 0) {
+          const parsed = JSON.parse(raw);
+          const state: DatabaseState = {
+            inquiries: parsed.inquiries || initialInquiries,
+            services: parsed.services || initialServices,
+            demos: parsed.demos || initialDemos,
+            faqs: parsed.faqs || initialFaqs,
+            content: parsed.content || initialContent,
+            settings: parsed.settings || initialSettings,
+            auditLogs: parsed.auditLogs || [],
+            admins: parsed.admins || this.getDefaultAdmins(),
+            analyticsEvents: parsed.analyticsEvents || [],
+            webVitals: parsed.webVitals || [],
+            errorLogs: parsed.errorLogs || [],
+            uptimeChecks: parsed.uptimeChecks || [],
+            systemAlerts: parsed.systemAlerts || []
+          };
+          // Always maintain a valid safety backup of the loaded state
+          try {
+            fs.writeFileSync(DB_BACKUP_FILE, JSON.stringify(state, null, 2), 'utf-8');
+          } catch (e) {
+            // backup copy error ignored
+          }
+          return state;
+        }
+      }
+
+      // 2. Secondary fallback: restore from db.json.bak if primary was empty/corrupted
+      if (fs.existsSync(DB_BACKUP_FILE)) {
+        console.warn('[Database] db.json was missing or empty, restoring state from db.json.bak...');
+        const backupRaw = fs.readFileSync(DB_BACKUP_FILE, 'utf-8');
+        if (backupRaw && backupRaw.trim().length > 0) {
+          const parsed = JSON.parse(backupRaw);
+          const restoredState: DatabaseState = {
+            inquiries: parsed.inquiries || initialInquiries,
+            services: parsed.services || initialServices,
+            demos: parsed.demos || initialDemos,
+            faqs: parsed.faqs || initialFaqs,
+            content: parsed.content || initialContent,
+            settings: parsed.settings || initialSettings,
+            auditLogs: parsed.auditLogs || [],
+            admins: parsed.admins || this.getDefaultAdmins(),
+            analyticsEvents: parsed.analyticsEvents || [],
+            webVitals: parsed.webVitals || [],
+            errorLogs: parsed.errorLogs || [],
+            uptimeChecks: parsed.uptimeChecks || [],
+            systemAlerts: parsed.systemAlerts || []
+          };
+          this.saveStateToDisk(restoredState);
+          return restoredState;
+        }
       }
     } catch (err) {
-      console.warn('Could not read existing db.json, using defaults:', err);
+      console.warn('[Database] Could not read existing db.json or backup, attempting recovery:', err);
     }
 
     const defaultState: DatabaseState = {
@@ -690,7 +1039,18 @@ class DatabaseService {
       if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
       }
-      fs.writeFileSync(DB_FILE, JSON.stringify(state, null, 2), 'utf-8');
+      const jsonString = JSON.stringify(state, null, 2);
+      // Atomic write via temp file
+      const tempFile = path.join(DATA_DIR, `db.json.tmp.${Date.now()}`);
+      fs.writeFileSync(tempFile, jsonString, 'utf-8');
+      fs.renameSync(tempFile, DB_FILE);
+      
+      // Update safety backup file
+      try {
+        fs.writeFileSync(DB_BACKUP_FILE, jsonString, 'utf-8');
+      } catch (e) {
+        // backup copy error ignored
+      }
     } catch (err) {
       console.error('Error persisting db.json:', err);
     }
@@ -711,10 +1071,18 @@ class DatabaseService {
     if (!this.mongoDb) return;
     try {
       const settingsCol = this.mongoDb.collection('settings');
-      await settingsCol.replaceOne({ _id: 'global_settings' as any }, { _id: 'global_settings' as any, ...this.state.settings }, { upsert: true });
+      await settingsCol.replaceOne(
+        { _id: 'global_settings' as any },
+        { _id: 'global_settings' as any, ...this.state.settings },
+        { upsert: true }
+      );
 
       const contentCol = this.mongoDb.collection('content');
-      await contentCol.replaceOne({ _id: 'global_content' as any }, { _id: 'global_content' as any, ...this.state.content }, { upsert: true });
+      await contentCol.replaceOne(
+        { _id: 'global_content' as any },
+        { _id: 'global_content' as any, ...this.state.content },
+        { upsert: true }
+      );
     } catch (err) {
       console.error('[Database] Error syncing settings/content to MongoDB:', err);
     }
@@ -895,45 +1263,80 @@ class DatabaseService {
   }
 
   public saveService(service: Partial<ServiceItem> & { name: string }): ServiceItem {
+    let resultService: ServiceItem;
     if (service._id) {
       const index = this.state.services.findIndex(s => s._id === service._id);
       if (index !== -1) {
         this.state.services[index] = { ...this.state.services[index], ...service } as ServiceItem;
-        this.persist();
-        return this.state.services[index];
+        resultService = this.state.services[index];
+      } else {
+        resultService = {
+          _id: service._id,
+          slug: service.slug || service.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          name: service.name,
+          iconName: service.iconName || 'Bot',
+          tagline: service.tagline || '',
+          shortDescription: service.shortDescription || '',
+          fullDescription: service.fullDescription || '',
+          features: service.features || [],
+          capabilities: service.capabilities || [],
+          useCases: service.useCases || [],
+          benefits: service.benefits || [],
+          demoVideoUrl: service.demoVideoUrl,
+          demoVideoThumbnail: service.demoVideoThumbnail,
+          ctaText: service.ctaText || 'REQUEST SERVICE',
+          displayOrder: service.displayOrder ?? (this.state.services.length + 1),
+          published: service.published ?? true,
+          badge: service.badge
+        };
+        this.state.services.push(resultService);
       }
+    } else {
+      resultService = {
+        _id: 'srv_' + Date.now(),
+        slug: service.slug || service.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        name: service.name,
+        iconName: service.iconName || 'Bot',
+        tagline: service.tagline || '',
+        shortDescription: service.shortDescription || '',
+        fullDescription: service.fullDescription || '',
+        features: service.features || [],
+        capabilities: service.capabilities || [],
+        useCases: service.useCases || [],
+        benefits: service.benefits || [],
+        demoVideoUrl: service.demoVideoUrl,
+        demoVideoThumbnail: service.demoVideoThumbnail,
+        ctaText: service.ctaText || 'REQUEST SERVICE',
+        displayOrder: service.displayOrder ?? (this.state.services.length + 1),
+        published: service.published ?? true,
+        badge: service.badge
+      };
+      this.state.services.push(resultService);
     }
 
-    const newService: ServiceItem = {
-      _id: 'srv_' + Date.now(),
-      slug: service.slug || service.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      name: service.name,
-      iconName: service.iconName || 'Bot',
-      tagline: service.tagline || '',
-      shortDescription: service.shortDescription || '',
-      fullDescription: service.fullDescription || '',
-      features: service.features || [],
-      capabilities: service.capabilities || [],
-      useCases: service.useCases || [],
-      benefits: service.benefits || [],
-      demoVideoUrl: service.demoVideoUrl,
-      demoVideoThumbnail: service.demoVideoThumbnail,
-      ctaText: service.ctaText || 'REQUEST SERVICE',
-      displayOrder: service.displayOrder ?? (this.state.services.length + 1),
-      published: service.published ?? true,
-      badge: service.badge
-    };
-
-    this.state.services.push(newService);
     this.persist();
-    return newService;
+
+    if (this.isMongoConnected && this.mongoDb) {
+      this.mongoDb.collection('services').replaceOne(
+        { $or: [{ _id: resultService._id as any }, { slug: resultService.slug }] as any },
+        { ...resultService },
+        { upsert: true }
+      ).catch(err => console.warn('[Database] Mongo save service warning:', err));
+    }
+
+    return resultService;
   }
 
   public deleteService(id: string): boolean {
     const initialLen = this.state.services.length;
     this.state.services = this.state.services.filter(s => s._id !== id);
     const deleted = this.state.services.length < initialLen;
-    if (deleted) this.persist();
+    if (deleted) {
+      this.persist();
+      if (this.isMongoConnected && this.mongoDb) {
+        this.mongoDb.collection('services').deleteOne({ _id: id as any }).catch(() => {});
+      }
+    }
     return deleted;
   }
 
@@ -947,43 +1350,76 @@ class DatabaseService {
   }
 
   public saveDemo(demo: Partial<DemoItem> & { title: string }): DemoItem {
+    let resultDemo: DemoItem;
     if (demo._id) {
       const index = this.state.demos.findIndex(d => d._id === demo._id);
       if (index !== -1) {
         this.state.demos[index] = { ...this.state.demos[index], ...demo } as DemoItem;
-        this.persist();
-        return this.state.demos[index];
+        resultDemo = this.state.demos[index];
+      } else {
+        resultDemo = {
+          _id: demo._id,
+          title: demo.title,
+          slug: demo.slug || demo.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          category: demo.category || 'AI AGENTS',
+          description: demo.description || '',
+          features: demo.features || [],
+          thumbnail: demo.thumbnail || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
+          videoUrl: demo.videoUrl || '',
+          duration: demo.duration || '03:00',
+          clientIndustry: demo.clientIndustry || 'Enterprise',
+          keyImpact: demo.keyImpact || 'Proven Efficiency',
+          published: demo.published ?? true,
+          featured: demo.featured ?? false,
+          displayOrder: demo.displayOrder ?? (this.state.demos.length + 1),
+          createdAt: new Date().toISOString()
+        };
+        this.state.demos.push(resultDemo);
       }
+    } else {
+      resultDemo = {
+        _id: 'demo_' + Date.now(),
+        title: demo.title,
+        slug: demo.slug || demo.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        category: demo.category || 'AI AGENTS',
+        description: demo.description || '',
+        features: demo.features || [],
+        thumbnail: demo.thumbnail || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
+        videoUrl: demo.videoUrl || '',
+        duration: demo.duration || '03:00',
+        clientIndustry: demo.clientIndustry || 'Enterprise',
+        keyImpact: demo.keyImpact || 'Proven Efficiency',
+        published: demo.published ?? true,
+        featured: demo.featured ?? false,
+        displayOrder: demo.displayOrder ?? (this.state.demos.length + 1),
+        createdAt: new Date().toISOString()
+      };
+      this.state.demos.push(resultDemo);
     }
 
-    const newDemo: DemoItem = {
-      _id: 'demo_' + Date.now(),
-      title: demo.title,
-      slug: demo.slug || demo.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      category: demo.category || 'AI AGENTS',
-      description: demo.description || '',
-      features: demo.features || [],
-      thumbnail: demo.thumbnail || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
-      videoUrl: demo.videoUrl || '',
-      duration: demo.duration || '03:00',
-      clientIndustry: demo.clientIndustry || 'Enterprise',
-      keyImpact: demo.keyImpact || 'Proven Efficiency',
-      published: demo.published ?? true,
-      featured: demo.featured ?? false,
-      displayOrder: demo.displayOrder ?? (this.state.demos.length + 1),
-      createdAt: new Date().toISOString()
-    };
-
-    this.state.demos.push(newDemo);
     this.persist();
-    return newDemo;
+
+    if (this.isMongoConnected && this.mongoDb) {
+      this.mongoDb.collection('demos').replaceOne(
+        { _id: resultDemo._id as any },
+        { ...resultDemo },
+        { upsert: true }
+      ).catch(err => console.warn('[Database] Mongo save demo warning:', err));
+    }
+
+    return resultDemo;
   }
 
   public deleteDemo(id: string): boolean {
     const initialLen = this.state.demos.length;
     this.state.demos = this.state.demos.filter(d => d._id !== id);
     const deleted = this.state.demos.length < initialLen;
-    if (deleted) this.persist();
+    if (deleted) {
+      this.persist();
+      if (this.isMongoConnected && this.mongoDb) {
+        this.mongoDb.collection('demos').deleteOne({ _id: id as any }).catch(() => {});
+      }
+    }
     return deleted;
   }
 
@@ -997,35 +1433,60 @@ class DatabaseService {
   }
 
   public saveFaq(faq: Partial<FAQItem> & { question: string; answer: string }): FAQItem {
+    let resultFaq: FAQItem;
     if (faq._id) {
       const index = this.state.faqs.findIndex(f => f._id === faq._id);
       if (index !== -1) {
         this.state.faqs[index] = { ...this.state.faqs[index], ...faq } as FAQItem;
-        this.persist();
-        return this.state.faqs[index];
+        resultFaq = this.state.faqs[index];
+      } else {
+        resultFaq = {
+          _id: faq._id,
+          question: faq.question,
+          answer: faq.answer,
+          category: faq.category || 'General',
+          displayOrder: faq.displayOrder ?? (this.state.faqs.length + 1),
+          published: faq.published ?? true,
+          createdAt: new Date().toISOString()
+        };
+        this.state.faqs.push(resultFaq);
       }
+    } else {
+      resultFaq = {
+        _id: 'faq_' + Date.now(),
+        question: faq.question,
+        answer: faq.answer,
+        category: faq.category || 'General',
+        displayOrder: faq.displayOrder ?? (this.state.faqs.length + 1),
+        published: faq.published ?? true,
+        createdAt: new Date().toISOString()
+      };
+      this.state.faqs.push(resultFaq);
     }
 
-    const newFaq: FAQItem = {
-      _id: 'faq_' + Date.now(),
-      question: faq.question,
-      answer: faq.answer,
-      category: faq.category || 'General',
-      displayOrder: faq.displayOrder ?? (this.state.faqs.length + 1),
-      published: faq.published ?? true,
-      createdAt: new Date().toISOString()
-    };
-
-    this.state.faqs.push(newFaq);
     this.persist();
-    return newFaq;
+
+    if (this.isMongoConnected && this.mongoDb) {
+      this.mongoDb.collection('faqs').replaceOne(
+        { _id: resultFaq._id as any },
+        { ...resultFaq },
+        { upsert: true }
+      ).catch(err => console.warn('[Database] Mongo save faq warning:', err));
+    }
+
+    return resultFaq;
   }
 
   public deleteFaq(id: string): boolean {
     const initialLen = this.state.faqs.length;
     this.state.faqs = this.state.faqs.filter(f => f._id !== id);
     const deleted = this.state.faqs.length < initialLen;
-    if (deleted) this.persist();
+    if (deleted) {
+      this.persist();
+      if (this.isMongoConnected && this.mongoDb) {
+        this.mongoDb.collection('faqs').deleteOne({ _id: id as any }).catch(() => {});
+      }
+    }
     return deleted;
   }
 
@@ -1072,6 +1533,9 @@ class DatabaseService {
       this.state.auditLogs.pop();
     }
     this.persist();
+    if (this.isMongoConnected && this.mongoDb) {
+      this.mongoDb.collection('audit_logs').insertOne({ ...log } as any).catch(() => {});
+    }
   }
 
   // --- ADMIN AUTH & SECURITY ---
