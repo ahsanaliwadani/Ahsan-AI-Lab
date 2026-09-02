@@ -1537,7 +1537,7 @@ app.post('/api/admin/database/reconnect', requireAdminAuth, async (req: Authenti
     });
     res.json({
       success: connected,
-      message: connected ? 'MongoDB reconnected and synchronized successfully.' : 'Could not connect to MongoDB. Reverting to local store fallback.'
+      message: connected ? 'MongoDB reconnected and synchronized successfully.' : 'Could not connect to MongoDB. Please verify connection credentials.'
     });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err?.message || 'Failed to reconnect.' });

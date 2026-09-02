@@ -23,18 +23,24 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onNaviga
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email: email.trim(), password })
       });
 
-      const data = await res.json();
-      if (data.success && data.token) {
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        data = null;
+      }
+
+      if (res.ok && data?.success && data?.token) {
         localStorage.setItem('ahsan_admin_token', data.token);
         onLoginSuccess(data.token, data.admin);
       } else {
-        setError(data.message || 'Invalid credentials. Please verify email and password.');
+        setError(data?.message || `Authentication failed (Status ${res.status}). Please verify credentials.`);
       }
     } catch (err: any) {
-      setError('Unable to authenticate with backend server.');
+      setError(err?.message || 'Network error: Unable to connect to backend server.');
     } finally {
       setIsLoading(false);
     }

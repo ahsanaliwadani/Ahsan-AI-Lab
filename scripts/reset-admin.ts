@@ -2,63 +2,63 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import fs from 'fs';
-import path from 'path';
 import bcrypt from 'bcryptjs';
-
-const DATA_DIR = path.join(process.cwd(), 'data');
-const DB_FILE = path.join(DATA_DIR, 'db.json');
+import { MongoClient } from 'mongodb';
 
 const args = process.argv.slice(2);
 const emailArg = args[0] || process.env.ADMIN_EMAIL || 'admin@ahsanailabs.com';
-const passwordArg = args[1] || process.env.ADMIN_PASSWORD || 'Ahsan&ali12:@';
+const passwordArg = args[1] || process.env.ADMIN_PASSWORD || 'admin_password_123';
+const uri = process.env.MONGODB_URI;
+const dbName = process.env.DATABASE_NAME || 'AHSAN_AI_LABS';
 
 console.log('========================================================');
-console.log('    🔐 AHSAN AI LABS — Admin Credential Tool');
+console.log('    🔐 AHSAN AI LABS — MongoDB Admin Credential Tool');
 console.log('========================================================');
 console.log(`--> Target Email:    ${emailArg}`);
 console.log(`--> Target Password: ${passwordArg}`);
 
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
+async function main() {
+  const salt = bcrypt.genSaltSync(10);
+  const passwordHash = bcrypt.hashSync(passwordArg, salt);
 
-let dbData: any = { admins: [] };
-if (fs.existsSync(DB_FILE)) {
-  try {
-    dbData = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
-  } catch (e) {
-    console.warn('Could not parse existing db.json, creating clean structure');
-  }
-}
+  if (uri) {
+    try {
+      console.log(`--> Connecting to MongoDB: ${dbName}...`);
+      const client = new MongoClient(uri, { connectTimeoutMS: 5000 });
+      await client.connect();
+      const db = client.db(dbName);
+      const adminsCol = db.collection('admins');
 
-if (!Array.isArray(dbData.admins) || dbData.admins.length === 0) {
-  dbData.admins = [
-    {
-      _id: 'admin_primary',
-      email: emailArg,
-      name: 'Ahsan Ali (Super Admin)',
-      role: 'SUPER_ADMIN',
-      passwordHash: '',
-      lastLogin: new Date().toISOString()
+      await adminsCol.updateOne(
+        { $or: [{ _id: 'admin_primary' as any }, { email: emailArg }] as any },
+        {
+          $set: {
+            _id: 'admin_primary',
+            email: emailArg,
+            name: 'Ahsan Ali (Super Admin)',
+            role: 'SUPER_ADMIN',
+            passwordHash,
+            updatedAt: new Date().toISOString()
+          }
+        },
+        { upsert: true }
+      );
+
+      await client.close();
+      console.log(' ✅ Admin credentials successfully updated in MongoDB!');
+    } catch (err: any) {
+      console.warn(' ⚠️ MongoDB update failed:', err?.message || err);
     }
-  ];
+  } else {
+    console.log(' ℹ️ MONGODB_URI not provided. Admin credentials active via .env configuration.');
+  }
+
+  console.log(` ✅ Password hash generated: ${passwordHash.substring(0, 15)}...`);
+  console.log('========================================================');
+  console.log(' You can now login on the Admin page with:');
+  console.log(`  Email:    ${emailArg}`);
+  console.log(`  Password: ${passwordArg}`);
+  console.log('========================================================');
 }
 
-const salt = bcrypt.genSaltSync(10);
-const passwordHash = bcrypt.hashSync(passwordArg, salt);
-
-// Update primary admin
-dbData.admins[0].email = emailArg;
-dbData.admins[0].passwordHash = passwordHash;
-dbData.admins[0].updatedAt = new Date().toISOString();
-
-fs.writeFileSync(DB_FILE, JSON.stringify(dbData, null, 2), 'utf-8');
-
-console.log(' ✅ Admin credentials successfully updated in data/db.json!');
-console.log(` ✅ Password hash generated: ${passwordHash.substring(0, 15)}...`);
-console.log('========================================================');
-console.log(' You can now login on the Admin page with:');
-console.log(`  Email:    ${emailArg}`);
-console.log(`  Password: ${passwordArg}`);
-console.log('========================================================');
+main();

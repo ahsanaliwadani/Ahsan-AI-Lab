@@ -3719,7 +3719,7 @@ WhatsApp: +92 344 6899742`;
                         : 'bg-amber-950/80 text-amber-300 border-amber-700/80'
                     }`}>
                       <span className={`w-2 h-2 rounded-full ${dbStatus?.connected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
-                      <span>{dbStatus?.connected ? 'MONGODB CONNECTED' : 'LOCAL ATOMIC STORE (db.json)'}</span>
+                      <span>{dbStatus?.connected ? 'MONGODB CONNECTED' : 'MONGODB (STANDBY)'}</span>
                     </span>
                   </div>
                 </div>

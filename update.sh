@@ -27,14 +27,6 @@ PRESERVE_ID=$(date +%s)
 PRESERVE_DIR="/tmp/ahsan_update_preserve_${PRESERVE_ID}"
 mkdir -p "${PRESERVE_DIR}"
 
-if [ -d "data" ]; then
-  mkdir -p "${PRESERVE_DIR}/data"
-  cp -r data/* "${PRESERVE_DIR}/data/" 2>/dev/null || true
-  # Also store a local rollback copy
-  mkdir -p "data/backup_pre_update"
-  cp -r data/db.json "data/backup_pre_update/db_pre_update_${PRESERVE_ID}.json" 2>/dev/null || true
-fi
-
 if [ -f ".env" ]; then
   cp .env "${PRESERVE_DIR}/.env" 2>/dev/null || true
 fi
@@ -48,14 +40,9 @@ if [ -d ".git" ]; then
   git stash pop 2>/dev/null || true
 fi
 
-# 4. Restore active user database & settings (Prevents Git from overwriting with initial mock data)
-if [ -d "${PRESERVE_DIR}/data" ]; then
-  echo "--> Step 4/6: Restoring user database, custom settings, and inquiries..."
-  mkdir -p data
-  cp -r "${PRESERVE_DIR}/data/"* data/ 2>/dev/null || true
-fi
-
+# 4. Restore active user settings and environment
 if [ -f "${PRESERVE_DIR}/.env" ]; then
+  echo "--> Step 4/6: Restoring environment configuration..."
   cp "${PRESERVE_DIR}/.env" .env 2>/dev/null || true
 fi
 
