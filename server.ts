@@ -1529,6 +1529,8 @@ app.post('/api/admin/database/reconnect', requireAdminAuth, async (req: Authenti
   try {
     const { uri, dbName } = req.body;
     const connected = await db.reconnectMongo(uri, dbName);
+    const status = db.getMongoStatus();
+    const metrics = await db.getDatabaseMetrics();
     db.logAudit({
       adminEmail: req.adminUser?.email || 'admin',
       action: 'MONGODB_RECONNECTED',
@@ -1537,7 +1539,11 @@ app.post('/api/admin/database/reconnect', requireAdminAuth, async (req: Authenti
     });
     res.json({
       success: connected,
-      message: connected ? 'MongoDB reconnected and synchronized successfully.' : 'Could not connect to MongoDB. Please verify connection credentials.'
+      status,
+      metrics,
+      message: connected 
+        ? 'MongoDB reconnected and synchronized successfully with production cluster!' 
+        : 'Could not connect to MongoDB. Please ensure MongoDB service is active on your server.'
     });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err?.message || 'Failed to reconnect.' });

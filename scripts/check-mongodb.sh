@@ -85,7 +85,12 @@ fi
 # Step 3: Check Environment File (.env) Configuration
 echo -e "\n${BLUE}--> [2/4] Checking .env Database Connection Configuration...${NC}"
 if [ -f ".env" ]; then
-  if grep -q "MONGODB_URI" .env; then
+  # If .env contains the docker template user credentials but local mongod is installed, sanitize to 127.0.0.1 without bad auth
+  if grep -q "ahsan_admin:AhsanSecureMongoPass2026!" .env; then
+    echo -e "${YELLOW}⚠ Found template credentials in .env. Updating to direct local MongoDB (mongodb://127.0.0.1:27017/AHSAN_AI_LABS)...${NC}"
+    sed -i 's|MONGODB_URI=.*|MONGODB_URI="mongodb://127.0.0.1:27017/AHSAN_AI_LABS"|' .env
+    echo -e "${GREEN}✓ Updated MONGODB_URI in .env to match local native mongod.${NC}"
+  elif grep -q "MONGODB_URI" .env; then
     ENV_URI=$(grep "MONGODB_URI" .env | head -n 1)
     echo -e "${GREEN}✓ MONGODB_URI is declared in .env: ${ENV_URI}${NC}"
   else

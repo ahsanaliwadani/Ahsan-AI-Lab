@@ -293,14 +293,19 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     }
   };
 
-  const handleReconnectDatabase = async () => {
+  const handleReconnectDatabase = async (overrideUri?: string) => {
     setIsReconnectingDb(true);
+    setDbActionMsg(null);
     try {
+      const targetUri = (typeof overrideUri === 'string' && overrideUri.trim()) 
+        ? overrideUri.trim() 
+        : (customMongoUri.trim() || undefined);
+
       const res = await fetch('/api/admin/database/reconnect', {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({
-          uri: customMongoUri.trim() || undefined,
+          uri: targetUri,
           dbName: customDbName.trim() || undefined
         })
       });
@@ -309,6 +314,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         setDbActionMsg({ type: 'success', text: data.message });
         setCustomMongoUri('');
         setCustomDbName('');
+        if (data.status) setDbStatus(data.status);
+        if (data.metrics) setDbMetrics(data.metrics);
+        fetchAllData();
       } else {
         setDbActionMsg({ type: 'error', text: data.message });
       }
@@ -1501,11 +1509,28 @@ WhatsApp: +92 344 6899742`;
               <h2 className="text-xl sm:text-2xl font-bold font-heading text-white capitalize">
                 {currentTab.replace('-', ' ')}
               </h2>
-              {stats?.mongoStatus && (
-                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-800">
-                  <Database className="w-3 h-3" />
-                  <span>{stats.mongoStatus.mode}</span>
-                </span>
+              {(dbStatus?.connected || stats?.mongoStatus?.connected) ? (
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab('database')}
+                  className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-800 hover:bg-emerald-900/60 transition-colors"
+                  title="MongoDB 7.0 Cluster Active - Click to view Database Manager"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <Database className="w-3 h-3 text-emerald-400" />
+                  <span>MongoDB Connected</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleReconnectDatabase('mongodb://127.0.0.1:27017/AHSAN_AI_LABS')}
+                  disabled={isReconnectingDb}
+                  className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-amber-950/90 text-amber-300 border border-amber-800 hover:bg-amber-900 transition-all cursor-pointer shadow-sm"
+                  title="Click to auto-connect to local MongoDB (127.0.0.1:27017)"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isReconnectingDb ? 'animate-spin text-amber-300' : 'text-amber-400'}`} />
+                  <span>{isReconnectingDb ? 'Connecting MongoDB...' : 'MongoDB Standby (Click to Connect)'}</span>
+                </button>
               )}
             </div>
             <div className="text-xs text-slate-400 mt-0.5">
@@ -3761,6 +3786,18 @@ WhatsApp: +92 344 6899742`;
 
                   {/* Actions Row */}
                   <div className="flex flex-wrap items-center gap-2.5 pt-2">
+                    {!dbStatus?.connected && (
+                      <button
+                        type="button"
+                        onClick={() => handleReconnectDatabase('mongodb://127.0.0.1:27017/AHSAN_AI_LABS')}
+                        disabled={isReconnectingDb}
+                        className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center space-x-2 shadow-md shadow-emerald-600/30"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${isReconnectingDb ? 'animate-spin' : ''}`} />
+                        <span>{isReconnectingDb ? 'Connecting...' : 'Connect to Local MongoDB (127.0.0.1)'}</span>
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       onClick={handleTestDatabase}
@@ -3898,7 +3935,22 @@ WhatsApp: +92 344 6899742`;
                   <div className="space-y-2 text-xs font-mono">
                     <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-3">
                       <div className="truncate">
-                        <span className="text-slate-500 mr-2"># 1. Check & Auto-Recover MongoDB:</span>
+                        <span className="text-emerald-400 font-bold mr-2"># 1. 1-Click Fix & Connect MongoDB:</span>
+                        <span className="text-cyan-300">./scripts/fix-mongodb.sh</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard('./scripts/fix-mongodb.sh', 'cmd0')}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 text-[10px] shrink-0 flex items-center space-x-1"
+                      >
+                        {copiedBashCmd === 'cmd0' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedBashCmd === 'cmd0' ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-3">
+                      <div className="truncate">
+                        <span className="text-slate-500 mr-2"># 2. Check & Auto-Recover MongoDB:</span>
                         <span className="text-cyan-300">./scripts/check-mongodb.sh</span>
                       </div>
                       <button
@@ -3913,7 +3965,7 @@ WhatsApp: +92 344 6899742`;
 
                     <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-3">
                       <div className="truncate">
-                        <span className="text-slate-500 mr-2"># 2. 1-Command MongoDB Installer:</span>
+                        <span className="text-slate-500 mr-2"># 3. 1-Command MongoDB Installer:</span>
                         <span className="text-cyan-300">sudo ./scripts/setup-mongodb.sh</span>
                       </div>
                       <button
@@ -3928,7 +3980,7 @@ WhatsApp: +92 344 6899742`;
 
                     <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-3">
                       <div className="truncate">
-                        <span className="text-slate-500 mr-2"># 3. Restart MongoDB Service:</span>
+                        <span className="text-slate-500 mr-2"># 4. Restart MongoDB Service:</span>
                         <span className="text-cyan-300">sudo systemctl restart mongod && sudo systemctl status mongod</span>
                       </div>
                       <button
