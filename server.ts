@@ -266,6 +266,28 @@ Sitemap: https://ahsanailab.bond/sitemap.xml
   res.status(200).send(robotsTxt);
 });
 
+// GET /zohoverify/verifyforzoho.html & /verifyforzoho.html (Zoho Mail Domain Verification)
+app.get(['/zohoverify/verifyforzoho.html', '/verifyforzoho.html'], (req: Request, res: Response) => {
+  const candidatePaths = [
+    path.join(process.cwd(), 'public', 'zohoverify', 'verifyforzoho.html'),
+    path.join(process.cwd(), 'zohoverify', 'verifyforzoho.html'),
+    path.join(process.cwd(), 'dist', 'zohoverify', 'verifyforzoho.html')
+  ];
+
+  for (const filePath of candidatePaths) {
+    if (fs.existsSync(filePath)) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      return res.sendFile(filePath);
+    }
+  }
+
+  // Fallback direct string response with Zoho verification code
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.status(200).send('55503614');
+});
+
 // GET /api/health
 app.get('/api/health', (req: Request, res: Response) => {
   const server = db.getServerMetrics();
