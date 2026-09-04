@@ -110,6 +110,14 @@ export interface FAQItem {
   createdAt: string;
 }
 
+export interface FounderSocialsEnabled {
+  linkedin?: boolean;
+  twitter?: boolean;
+  github?: boolean;
+  email?: boolean;
+  whatsapp?: boolean;
+}
+
 export interface FounderInfo {
   name: string;
   title: string;
@@ -123,6 +131,7 @@ export interface FounderInfo {
     email?: string;
     whatsapp?: string;
   };
+  socialsEnabled?: FounderSocialsEnabled;
 }
 
 export interface CompanyContent {
@@ -149,6 +158,15 @@ export interface CompanyContent {
   }[];
 }
 
+export interface SocialLinksEnabled {
+  linkedin?: boolean;
+  twitter?: boolean;
+  instagram?: boolean;
+  youtube?: boolean;
+  facebook?: boolean;
+  github?: boolean;
+}
+
 export interface SiteSettings {
   companyName: string;
   tagline: string;
@@ -165,7 +183,9 @@ export interface SiteSettings {
     instagram: string;
     youtube: string;
     facebook: string;
+    github?: string;
   };
+  socialLinksEnabled?: SocialLinksEnabled;
   n8nWebhookUrl: string;
   n8nContactWebhookUrl?: string;
   n8nOrderWebhookUrl?: string;

@@ -351,6 +351,13 @@ const initialContent: CompanyContent = {
       twitter: 'https://x.com/ahsanali',
       email: 'ahsan@ahsanailabs.com',
       whatsapp: '+92 331 6041183'
+    },
+    socialsEnabled: {
+      linkedin: true,
+      twitter: true,
+      github: true,
+      email: true,
+      whatsapp: true
     }
   },
   about: {
@@ -395,6 +402,14 @@ const initialSettings: SiteSettings = {
     instagram: 'https://instagram.com/ahsanailabs',
     youtube: 'https://youtube.com/@ahsanailabs',
     facebook: 'https://facebook.com/ahsanailabs'
+  },
+  socialLinksEnabled: {
+    linkedin: true,
+    twitter: true,
+    instagram: true,
+    youtube: true,
+    facebook: true,
+    github: true
   },
   n8nWebhookUrl: process.env.N8N_WEBHOOK_URL || 'https://n8n-130-110-123-57.nip.io/webhook/order-inquiry',
   n8nContactWebhookUrl: process.env.N8N_CONTACT_WEBHOOK_URL || 'https://n8n-130-110-123-57.nip.io/webhook/contact-inquiry',
@@ -944,6 +959,16 @@ class DatabaseService {
           const cleanDemos = rawDemos.filter(d => !['demo_1', 'demo_2', 'demo_3', 'demo_4', 'demo_5', 'demo_6'].includes(d._id));
 
           const loadedSettings = parsed.settings ? { ...defaultState.settings, ...parsed.settings } : defaultState.settings;
+          if (!loadedSettings.socialLinksEnabled) {
+            loadedSettings.socialLinksEnabled = {
+              linkedin: true,
+              twitter: true,
+              instagram: true,
+              youtube: true,
+              facebook: true,
+              github: true
+            };
+          }
           if (!loadedSettings.supportWhatsApp || loadedSettings.supportWhatsApp.includes('344') || loadedSettings.supportWhatsApp.includes('6899742')) {
             loadedSettings.supportWhatsApp = '+92 331 6041183';
           }
@@ -952,6 +977,17 @@ class DatabaseService {
           }
 
           const loadedContent = parsed.content ? { ...defaultState.content, ...parsed.content } : defaultState.content;
+          if (loadedContent?.founder) {
+            if (!loadedContent.founder.socialsEnabled) {
+              loadedContent.founder.socialsEnabled = {
+                linkedin: true,
+                twitter: true,
+                github: true,
+                email: true,
+                whatsapp: true
+              };
+            }
+          }
           if (loadedContent?.founder?.socials?.whatsapp && (loadedContent.founder.socials.whatsapp.includes('344') || loadedContent.founder.socials.whatsapp.includes('6899742'))) {
             loadedContent.founder.socials.whatsapp = '+92 331 6041183';
           }

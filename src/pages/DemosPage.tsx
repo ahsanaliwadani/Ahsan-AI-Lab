@@ -66,17 +66,17 @@ export const DemosPage: React.FC<DemosPageProps> = ({
       </div>
 
       {/* Category Filter Tabs */}
-      <div className="flex items-center justify-start sm:justify-center overflow-x-auto no-scrollbar gap-2 p-2 bg-slate-900/60 rounded-2xl border border-slate-800/80">
-        <div className="flex items-center space-x-2 min-w-max">
+      <div className="sticky top-16 sm:top-20 z-20 backdrop-blur-md flex items-center justify-start sm:justify-center overflow-x-auto no-scrollbar gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-slate-900/90 rounded-2xl border border-slate-800/80 shadow-lg">
+        <div className="flex items-center space-x-1.5 sm:space-x-2 min-w-max">
           {categories.map((cat) => {
             const isSelected = selectedCategory === cat;
             return (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${
+                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-200 active:scale-95 ${
                   isSelected
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 scale-[1.02]'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800'
                 }`}
               >
@@ -187,17 +187,17 @@ export const DemosPage: React.FC<DemosPageProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div className="p-6 pt-0 space-y-2">
+              <div className="p-5 sm:p-6 pt-0 space-y-2">
                 <button
                   onClick={() => onWatchDemo(demo)}
-                  className="w-full flex items-center justify-center px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/30"
+                  className="w-full flex items-center justify-center px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/30 active:scale-95"
                 >
                   <Play className="w-3.5 h-3.5 mr-1.5 fill-current" />
                   <span>Watch Video Walkthrough</span>
                 </button>
                 <button
                   onClick={() => onSelectService(getServiceNameFromCategory(demo.category))}
-                  className="w-full flex items-center justify-center px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-medium border border-slate-800 transition-all"
+                  className="w-full flex items-center justify-center px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-medium border border-slate-800 transition-all active:scale-95"
                 >
                   <span>Request Similar Custom System</span>
                   <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
@@ -209,9 +209,9 @@ export const DemosPage: React.FC<DemosPageProps> = ({
       )}
 
       {/* Bottom Conversion Prompt */}
-      <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-r from-blue-950/80 to-[#081120] border border-blue-800/60 flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="p-6 sm:p-10 rounded-3xl bg-gradient-to-r from-blue-950/80 to-[#081120] border border-blue-800/60 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-5 sm:gap-6">
         <div className="space-y-1 text-left">
-          <h3 className="text-xl font-bold font-heading text-white">
+          <h3 className="text-lg sm:text-xl font-bold font-heading text-white">
             Have a unique enterprise workflow in mind?
           </h3>
           <p className="text-xs sm:text-sm text-slate-300">
@@ -220,7 +220,7 @@ export const DemosPage: React.FC<DemosPageProps> = ({
         </div>
         <button
           onClick={() => onSelectService('AI Agents')}
-          className="shrink-0 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-blue-600/30"
+          className="w-full md:w-auto shrink-0 px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-blue-600/30 active:scale-95 text-center"
         >
           Submit Custom Project Request
         </button>

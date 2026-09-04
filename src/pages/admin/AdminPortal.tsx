@@ -66,7 +66,13 @@ import {
   HardDrive,
   Gauge,
   FileCode,
-  CheckCheck
+  CheckCheck,
+  Linkedin,
+  Twitter,
+  Instagram,
+  Youtube,
+  Facebook,
+  Github
 } from 'lucide-react';
 import { 
   AdminUser, 
@@ -3145,13 +3151,95 @@ WhatsApp: +92 331 6041183`;
               </div>
 
               {/* Founder Social Profiles */}
-              <div className="space-y-3 pt-2 border-t border-slate-800">
-                <div className="text-cyan-400 font-bold uppercase tracking-wider text-xs">
-                  Founder Direct Social Links
+              <div className="space-y-4 pt-4 border-t border-slate-800">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <div className="text-cyan-400 font-bold uppercase tracking-wider text-xs flex items-center space-x-2">
+                      <Share2 className="w-3.5 h-3.5" />
+                      <span>Founder Direct Social Links</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Toggle ON or OFF any social profile. When toggled OFF, the link is hidden from the Founder section on the About Us page.
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setContent({
+                        ...content,
+                        founder: {
+                          ...content.founder,
+                          socialsEnabled: {
+                            linkedin: true,
+                            twitter: true,
+                            email: true,
+                            whatsapp: true,
+                            github: true
+                          }
+                        }
+                      })}
+                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
+                    >
+                      Enable All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setContent({
+                        ...content,
+                        founder: {
+                          ...content.founder,
+                          socialsEnabled: {
+                            linkedin: false,
+                            twitter: false,
+                            email: false,
+                            whatsapp: false,
+                            github: false
+                          }
+                        }
+                      })}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-semibold border border-slate-800 transition-colors"
+                    >
+                      Disable All
+                    </button>
+                  </div>
                 </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-slate-300 font-medium">LinkedIn URL</label>
+                  {/* LinkedIn */}
+                  <div className={`p-3.5 rounded-xl border transition-all ${
+                    content.founder?.socialsEnabled?.linkedin !== false 
+                      ? 'bg-slate-950/80 border-blue-900/50' 
+                      : 'bg-slate-950/40 border-slate-800/60 opacity-75'
+                  }`}>
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/60">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 rounded-lg bg-blue-950/80 text-blue-400 border border-blue-800/50">
+                          <Linkedin className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-xs font-semibold text-slate-200">LinkedIn Profile</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={content.founder?.socialsEnabled?.linkedin !== false}
+                          onChange={(e) => setContent({
+                            ...content,
+                            founder: {
+                              ...content.founder,
+                              socialsEnabled: {
+                                ...content.founder?.socialsEnabled,
+                                linkedin: e.target.checked
+                              }
+                            }
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span className="ml-2 text-[10px] font-mono font-semibold text-slate-300">
+                          {content.founder?.socialsEnabled?.linkedin !== false ? 'ON' : 'OFF'}
+                        </span>
+                      </label>
+                    </div>
                     <input
                       type="url"
                       placeholder="https://linkedin.com/in/..."
@@ -3163,11 +3251,48 @@ WhatsApp: +92 331 6041183`;
                           socials: { ...content.founder?.socials, linkedin: e.target.value }
                         }
                       })}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                      className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500"
                     />
+                    <div className="text-[10px] text-slate-500 mt-1.5 flex items-center justify-between">
+                      <span>Status: {content.founder?.socialsEnabled?.linkedin !== false ? '🟢 Visible on Founder Bio' : '⚪ Hidden on website'}</span>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-slate-300 font-medium">Twitter / X URL</label>
+
+                  {/* Twitter / X */}
+                  <div className={`p-3.5 rounded-xl border transition-all ${
+                    content.founder?.socialsEnabled?.twitter !== false 
+                      ? 'bg-slate-950/80 border-cyan-900/50' 
+                      : 'bg-slate-950/40 border-slate-800/60 opacity-75'
+                  }`}>
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/60">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 rounded-lg bg-cyan-950/80 text-cyan-400 border border-cyan-800/50">
+                          <Twitter className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-xs font-semibold text-slate-200">Twitter / X Profile</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={content.founder?.socialsEnabled?.twitter !== false}
+                          onChange={(e) => setContent({
+                            ...content,
+                            founder: {
+                              ...content.founder,
+                              socialsEnabled: {
+                                ...content.founder?.socialsEnabled,
+                                twitter: e.target.checked
+                              }
+                            }
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600"></div>
+                        <span className="ml-2 text-[10px] font-mono font-semibold text-slate-300">
+                          {content.founder?.socialsEnabled?.twitter !== false ? 'ON' : 'OFF'}
+                        </span>
+                      </label>
+                    </div>
                     <input
                       type="url"
                       placeholder="https://x.com/..."
@@ -3179,11 +3304,48 @@ WhatsApp: +92 331 6041183`;
                           socials: { ...content.founder?.socials, twitter: e.target.value }
                         }
                       })}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                      className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500"
                     />
+                    <div className="text-[10px] text-slate-500 mt-1.5 flex items-center justify-between">
+                      <span>Status: {content.founder?.socialsEnabled?.twitter !== false ? '🟢 Visible on Founder Bio' : '⚪ Hidden on website'}</span>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-slate-300 font-medium">Email Address</label>
+
+                  {/* Email */}
+                  <div className={`p-3.5 rounded-xl border transition-all ${
+                    content.founder?.socialsEnabled?.email !== false 
+                      ? 'bg-slate-950/80 border-red-900/50' 
+                      : 'bg-slate-950/40 border-slate-800/60 opacity-75'
+                  }`}>
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/60">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 rounded-lg bg-red-950/80 text-red-400 border border-red-800/50">
+                          <Mail className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-xs font-semibold text-slate-200">Direct Email</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={content.founder?.socialsEnabled?.email !== false}
+                          onChange={(e) => setContent({
+                            ...content,
+                            founder: {
+                              ...content.founder,
+                              socialsEnabled: {
+                                ...content.founder?.socialsEnabled,
+                                email: e.target.checked
+                              }
+                            }
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-600"></div>
+                        <span className="ml-2 text-[10px] font-mono font-semibold text-slate-300">
+                          {content.founder?.socialsEnabled?.email !== false ? 'ON' : 'OFF'}
+                        </span>
+                      </label>
+                    </div>
                     <input
                       type="email"
                       placeholder="ahsan@ahsanailabs.com"
@@ -3195,11 +3357,48 @@ WhatsApp: +92 331 6041183`;
                           socials: { ...content.founder?.socials, email: e.target.value }
                         }
                       })}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                      className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-red-500"
                     />
+                    <div className="text-[10px] text-slate-500 mt-1.5 flex items-center justify-between">
+                      <span>Status: {content.founder?.socialsEnabled?.email !== false ? '🟢 Visible on Founder Bio' : '⚪ Hidden on website'}</span>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-slate-300 font-medium">WhatsApp Number</label>
+
+                  {/* WhatsApp */}
+                  <div className={`p-3.5 rounded-xl border transition-all ${
+                    content.founder?.socialsEnabled?.whatsapp !== false 
+                      ? 'bg-slate-950/80 border-emerald-900/50' 
+                      : 'bg-slate-950/40 border-slate-800/60 opacity-75'
+                  }`}>
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/60">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 rounded-lg bg-emerald-950/80 text-emerald-400 border border-emerald-800/50">
+                          <MessageSquare className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-xs font-semibold text-slate-200">WhatsApp Number</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={content.founder?.socialsEnabled?.whatsapp !== false}
+                          onChange={(e) => setContent({
+                            ...content,
+                            founder: {
+                              ...content.founder,
+                              socialsEnabled: {
+                                ...content.founder?.socialsEnabled,
+                                whatsapp: e.target.checked
+                              }
+                            }
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                        <span className="ml-2 text-[10px] font-mono font-semibold text-slate-300">
+                          {content.founder?.socialsEnabled?.whatsapp !== false ? 'ON' : 'OFF'}
+                        </span>
+                      </label>
+                    </div>
                     <input
                       type="text"
                       placeholder="+92 331 6041183"
@@ -3211,8 +3410,64 @@ WhatsApp: +92 331 6041183`;
                           socials: { ...content.founder?.socials, whatsapp: e.target.value }
                         }
                       })}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                      className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
                     />
+                    <div className="text-[10px] text-slate-500 mt-1.5 flex items-center justify-between">
+                      <span>Status: {content.founder?.socialsEnabled?.whatsapp !== false ? '🟢 Visible on Founder Bio' : '⚪ Hidden on website'}</span>
+                    </div>
+                  </div>
+
+                  {/* GitHub */}
+                  <div className={`p-3.5 rounded-xl border transition-all sm:col-span-2 ${
+                    content.founder?.socialsEnabled?.github !== false 
+                      ? 'bg-slate-950/80 border-purple-900/50' 
+                      : 'bg-slate-950/40 border-slate-800/60 opacity-75'
+                  }`}>
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/60">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 rounded-lg bg-purple-950/80 text-purple-400 border border-purple-800/50">
+                          <Github className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-xs font-semibold text-slate-200">GitHub Profile URL (Optional)</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={content.founder?.socialsEnabled?.github !== false}
+                          onChange={(e) => setContent({
+                            ...content,
+                            founder: {
+                              ...content.founder,
+                              socialsEnabled: {
+                                ...content.founder?.socialsEnabled,
+                                github: e.target.checked
+                              }
+                            }
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
+                        <span className="ml-2 text-[10px] font-mono font-semibold text-slate-300">
+                          {content.founder?.socialsEnabled?.github !== false ? 'ON' : 'OFF'}
+                        </span>
+                      </label>
+                    </div>
+                    <input
+                      type="url"
+                      placeholder="https://github.com/..."
+                      value={content.founder?.socials?.github || ''}
+                      onChange={(e) => setContent({
+                        ...content,
+                        founder: {
+                          ...content.founder,
+                          socials: { ...content.founder?.socials, github: e.target.value }
+                        }
+                      })}
+                      className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-purple-500"
+                    />
+                    <div className="text-[10px] text-slate-500 mt-1.5 flex items-center justify-between">
+                      <span>Status: {content.founder?.socialsEnabled?.github !== false ? '🟢 Visible on Founder Bio' : '⚪ Hidden on website'}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3613,14 +3868,87 @@ WhatsApp: +92 331 6041183`;
 
               {/* Official Brand Social Media Links Section */}
               <div className="space-y-4 pt-4 border-t border-slate-800">
-                <div className="text-blue-400 font-bold uppercase tracking-wider text-xs flex items-center justify-between">
-                  <span>Official Brand Social Media Links</span>
-                  <span className="text-[10px] text-slate-400">Rendered dynamically in footer & public site</span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <div className="text-blue-400 font-bold uppercase tracking-wider text-xs flex items-center space-x-2">
+                      <Globe className="w-3.5 h-3.5" />
+                      <span>Official Brand Social Media Links</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Toggle individual brand links ON or OFF. Changes reflect live on the website Footer and Contact Page.
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setSettings({
+                        ...settings,
+                        socialLinksEnabled: {
+                          linkedin: true,
+                          twitter: true,
+                          instagram: true,
+                          youtube: true,
+                          facebook: true,
+                          github: true
+                        }
+                      })}
+                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
+                    >
+                      Enable All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSettings({
+                        ...settings,
+                        socialLinksEnabled: {
+                          linkedin: false,
+                          twitter: false,
+                          instagram: false,
+                          youtube: false,
+                          facebook: false,
+                          github: false
+                        }
+                      })}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-semibold border border-slate-800 transition-colors"
+                    >
+                      Disable All
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-slate-300 font-medium">LinkedIn Company Page</label>
+                  {/* LinkedIn */}
+                  <div className={`p-3.5 rounded-xl border transition-all ${
+                    settings.socialLinksEnabled?.linkedin !== false 
+                      ? 'bg-slate-950/80 border-blue-900/50' 
+                      : 'bg-slate-950/40 border-slate-800/60 opacity-75'
+                  }`}>
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/60">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 rounded-lg bg-blue-950/80 text-blue-400 border border-blue-800/50">
+                          <Linkedin className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-xs font-semibold text-slate-200">LinkedIn Company Page</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={settings.socialLinksEnabled?.linkedin !== false}
+                          onChange={(e) => setSettings({
+                            ...settings,
+                            socialLinksEnabled: {
+                              ...settings.socialLinksEnabled,
+                              linkedin: e.target.checked
+                            }
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span className="ml-2 text-[10px] font-mono font-semibold text-slate-300">
+                          {settings.socialLinksEnabled?.linkedin !== false ? 'ON' : 'OFF'}
+                        </span>
+                      </label>
+                    </div>
                     <input
                       type="url"
                       placeholder="https://linkedin.com/company/..."
@@ -3629,11 +3957,45 @@ WhatsApp: +92 331 6041183`;
                         ...settings,
                         socialLinks: { ...settings.socialLinks, linkedin: e.target.value }
                       })}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                      className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500"
                     />
+                    <div className="text-[10px] text-slate-500 mt-1.5 flex items-center justify-between">
+                      <span>Status: {settings.socialLinksEnabled?.linkedin !== false ? '🟢 Visible in Footer & Contact' : '⚪ Hidden on website'}</span>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-slate-300 font-medium">Twitter / X Handle or URL</label>
+
+                  {/* Twitter / X */}
+                  <div className={`p-3.5 rounded-xl border transition-all ${
+                    settings.socialLinksEnabled?.twitter !== false 
+                      ? 'bg-slate-950/80 border-cyan-900/50' 
+                      : 'bg-slate-950/40 border-slate-800/60 opacity-75'
+                  }`}>
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/60">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 rounded-lg bg-cyan-950/80 text-cyan-400 border border-cyan-800/50">
+                          <Twitter className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-xs font-semibold text-slate-200">Twitter / X Profile</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={settings.socialLinksEnabled?.twitter !== false}
+                          onChange={(e) => setSettings({
+                            ...settings,
+                            socialLinksEnabled: {
+                              ...settings.socialLinksEnabled,
+                              twitter: e.target.checked
+                            }
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600"></div>
+                        <span className="ml-2 text-[10px] font-mono font-semibold text-slate-300">
+                          {settings.socialLinksEnabled?.twitter !== false ? 'ON' : 'OFF'}
+                        </span>
+                      </label>
+                    </div>
                     <input
                       type="url"
                       placeholder="https://x.com/..."
@@ -3642,11 +4004,45 @@ WhatsApp: +92 331 6041183`;
                         ...settings,
                         socialLinks: { ...settings.socialLinks, twitter: e.target.value }
                       })}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                      className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500"
                     />
+                    <div className="text-[10px] text-slate-500 mt-1.5 flex items-center justify-between">
+                      <span>Status: {settings.socialLinksEnabled?.twitter !== false ? '🟢 Visible in Footer & Contact' : '⚪ Hidden on website'}</span>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-slate-300 font-medium">Instagram Profile URL</label>
+
+                  {/* Instagram */}
+                  <div className={`p-3.5 rounded-xl border transition-all ${
+                    settings.socialLinksEnabled?.instagram !== false 
+                      ? 'bg-slate-950/80 border-pink-900/50' 
+                      : 'bg-slate-950/40 border-slate-800/60 opacity-75'
+                  }`}>
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/60">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 rounded-lg bg-pink-950/80 text-pink-400 border border-pink-800/50">
+                          <Instagram className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-xs font-semibold text-slate-200">Instagram Profile</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={settings.socialLinksEnabled?.instagram !== false}
+                          onChange={(e) => setSettings({
+                            ...settings,
+                            socialLinksEnabled: {
+                              ...settings.socialLinksEnabled,
+                              instagram: e.target.checked
+                            }
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-600"></div>
+                        <span className="ml-2 text-[10px] font-mono font-semibold text-slate-300">
+                          {settings.socialLinksEnabled?.instagram !== false ? 'ON' : 'OFF'}
+                        </span>
+                      </label>
+                    </div>
                     <input
                       type="url"
                       placeholder="https://instagram.com/..."
@@ -3655,11 +4051,45 @@ WhatsApp: +92 331 6041183`;
                         ...settings,
                         socialLinks: { ...settings.socialLinks, instagram: e.target.value }
                       })}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                      className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-pink-500"
                     />
+                    <div className="text-[10px] text-slate-500 mt-1.5 flex items-center justify-between">
+                      <span>Status: {settings.socialLinksEnabled?.instagram !== false ? '🟢 Visible in Footer & Contact' : '⚪ Hidden on website'}</span>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-slate-300 font-medium">YouTube Channel URL</label>
+
+                  {/* YouTube */}
+                  <div className={`p-3.5 rounded-xl border transition-all ${
+                    settings.socialLinksEnabled?.youtube !== false 
+                      ? 'bg-slate-950/80 border-red-900/50' 
+                      : 'bg-slate-950/40 border-slate-800/60 opacity-75'
+                  }`}>
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/60">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 rounded-lg bg-red-950/80 text-red-400 border border-red-800/50">
+                          <Youtube className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-xs font-semibold text-slate-200">YouTube Channel</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={settings.socialLinksEnabled?.youtube !== false}
+                          onChange={(e) => setSettings({
+                            ...settings,
+                            socialLinksEnabled: {
+                              ...settings.socialLinksEnabled,
+                              youtube: e.target.checked
+                            }
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-600"></div>
+                        <span className="ml-2 text-[10px] font-mono font-semibold text-slate-300">
+                          {settings.socialLinksEnabled?.youtube !== false ? 'ON' : 'OFF'}
+                        </span>
+                      </label>
+                    </div>
                     <input
                       type="url"
                       placeholder="https://youtube.com/@..."
@@ -3668,11 +4098,45 @@ WhatsApp: +92 331 6041183`;
                         ...settings,
                         socialLinks: { ...settings.socialLinks, youtube: e.target.value }
                       })}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                      className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-red-500"
                     />
+                    <div className="text-[10px] text-slate-500 mt-1.5 flex items-center justify-between">
+                      <span>Status: {settings.socialLinksEnabled?.youtube !== false ? '🟢 Visible in Footer & Contact' : '⚪ Hidden on website'}</span>
+                    </div>
                   </div>
-                  <div className="space-y-1 sm:col-span-2">
-                    <label className="text-slate-300 font-medium">Facebook Page URL</label>
+
+                  {/* Facebook */}
+                  <div className={`p-3.5 rounded-xl border transition-all ${
+                    settings.socialLinksEnabled?.facebook !== false 
+                      ? 'bg-slate-950/80 border-blue-900/50' 
+                      : 'bg-slate-950/40 border-slate-800/60 opacity-75'
+                  }`}>
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/60">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 rounded-lg bg-blue-950/80 text-blue-400 border border-blue-800/50">
+                          <Facebook className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-xs font-semibold text-slate-200">Facebook Page</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={settings.socialLinksEnabled?.facebook !== false}
+                          onChange={(e) => setSettings({
+                            ...settings,
+                            socialLinksEnabled: {
+                              ...settings.socialLinksEnabled,
+                              facebook: e.target.checked
+                            }
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span className="ml-2 text-[10px] font-mono font-semibold text-slate-300">
+                          {settings.socialLinksEnabled?.facebook !== false ? 'ON' : 'OFF'}
+                        </span>
+                      </label>
+                    </div>
                     <input
                       type="url"
                       placeholder="https://facebook.com/..."
@@ -3681,8 +4145,58 @@ WhatsApp: +92 331 6041183`;
                         ...settings,
                         socialLinks: { ...settings.socialLinks, facebook: e.target.value }
                       })}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                      className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500"
                     />
+                    <div className="text-[10px] text-slate-500 mt-1.5 flex items-center justify-between">
+                      <span>Status: {settings.socialLinksEnabled?.facebook !== false ? '🟢 Visible in Footer & Contact' : '⚪ Hidden on website'}</span>
+                    </div>
+                  </div>
+
+                  {/* GitHub Organization */}
+                  <div className={`p-3.5 rounded-xl border transition-all ${
+                    settings.socialLinksEnabled?.github !== false 
+                      ? 'bg-slate-950/80 border-purple-900/50' 
+                      : 'bg-slate-950/40 border-slate-800/60 opacity-75'
+                  }`}>
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/60">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 rounded-lg bg-purple-950/80 text-purple-400 border border-purple-800/50">
+                          <Github className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-xs font-semibold text-slate-200">GitHub Organization / Repo</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={settings.socialLinksEnabled?.github !== false}
+                          onChange={(e) => setSettings({
+                            ...settings,
+                            socialLinksEnabled: {
+                              ...settings.socialLinksEnabled,
+                              github: e.target.checked
+                            }
+                          })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
+                        <span className="ml-2 text-[10px] font-mono font-semibold text-slate-300">
+                          {settings.socialLinksEnabled?.github !== false ? 'ON' : 'OFF'}
+                        </span>
+                      </label>
+                    </div>
+                    <input
+                      type="url"
+                      placeholder="https://github.com/..."
+                      value={settings.socialLinks?.github || ''}
+                      onChange={(e) => setSettings({
+                        ...settings,
+                        socialLinks: { ...settings.socialLinks, github: e.target.value }
+                      })}
+                      className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-purple-500"
+                    />
+                    <div className="text-[10px] text-slate-500 mt-1.5 flex items-center justify-between">
+                      <span>Status: {settings.socialLinksEnabled?.github !== false ? '🟢 Visible in Footer & Contact' : '⚪ Hidden on website'}</span>
+                    </div>
                   </div>
                 </div>
               </div>

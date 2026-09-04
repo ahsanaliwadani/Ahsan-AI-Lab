@@ -70,7 +70,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
       </div>
 
       {/* 2. WHO WE ARE */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center p-8 sm:p-12 rounded-3xl bg-slate-900/60 border border-slate-800">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 items-center p-6 sm:p-10 lg:p-12 rounded-3xl bg-slate-900/60 border border-slate-800">
         <div className="lg:col-span-6 space-y-4 text-left">
           <div className="text-xs font-semibold uppercase tracking-widest text-blue-400">
             WHO WE ARE
@@ -86,41 +86,41 @@ export const AboutPage: React.FC<AboutPageProps> = ({
           </p>
         </div>
 
-        <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+        <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
             <div className="w-8 h-8 rounded-lg bg-blue-600/20 text-cyan-400 flex items-center justify-center">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <h3 className="text-sm font-bold font-heading text-white">Production Grade</h3>
             <p className="text-xs text-slate-400">Zero demo fluff. Every architecture is built for 24/7 uptime and data security.</p>
           </div>
-          <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
             <div className="w-8 h-8 rounded-lg bg-emerald-600/20 text-emerald-400 flex items-center justify-center">
               <Zap className="w-5 h-5" />
             </div>
             <h3 className="text-sm font-bold font-heading text-white">Automation First</h3>
             <p className="text-xs text-slate-400">End-to-end integration across your existing tools, databases, and APIs.</p>
           </div>
-          <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
             <div className="w-8 h-8 rounded-lg bg-amber-600/20 text-amber-400 flex items-center justify-center">
               <Target className="w-5 h-5" />
             </div>
             <h3 className="text-sm font-bold font-heading text-white">Measurable ROI</h3>
             <p className="text-xs text-slate-400">We quantify hours saved, missed calls recovered, and conversion boosts.</p>
           </div>
-          <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
             <div className="w-8 h-8 rounded-lg bg-purple-600/20 text-purple-400 flex items-center justify-center">
               <Cpu className="w-5 h-5" />
             </div>
             <h3 className="text-sm font-bold font-heading text-white">Modern AI Stack</h3>
-            <p className="text-xs text-slate-400">Modern multi-modal models, telephony low-latency voice, and n8n pipelines.</p>
+            <p className="text-xs text-slate-400">Modern multi-modal models, telephony low-latency voice, and autonomous cloud pipelines.</p>
           </div>
         </div>
       </div>
 
       {/* 3. MISSION & VISION */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="p-8 sm:p-10 rounded-3xl bg-blue-950/30 border border-blue-800/50 space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+        <div className="p-6 sm:p-10 rounded-3xl bg-blue-950/30 border border-blue-800/50 space-y-3">
           <div className="flex items-center space-x-2 text-blue-400">
             <Target className="w-5 h-5" />
             <h3 className="text-xs font-bold uppercase tracking-widest">OUR MISSION</h3>
@@ -133,7 +133,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
           </p>
         </div>
 
-        <div className="p-8 sm:p-10 rounded-3xl bg-cyan-950/20 border border-cyan-800/40 space-y-3">
+        <div className="p-6 sm:p-10 rounded-3xl bg-cyan-950/20 border border-cyan-800/40 space-y-3">
           <div className="flex items-center space-x-2 text-cyan-400">
             <Eye className="w-5 h-5" />
             <h3 className="text-xs font-bold uppercase tracking-widest">OUR VISION</h3>
@@ -148,7 +148,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
       </div>
 
       {/* 4. WHAT WE BUILD (All 5 Services) */}
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         <div className="text-center max-w-2xl mx-auto space-y-2">
           <div className="text-xs font-semibold uppercase tracking-widest text-blue-400">
             WHAT WE BUILD
@@ -158,18 +158,18 @@ export const AboutPage: React.FC<AboutPageProps> = ({
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
           {[
             { name: 'AI Agents', icon: <Bot className="w-5 h-5 text-blue-400" />, desc: 'Autonomous systems executing multi-step operations.' },
             { name: 'AI Voice Agents', icon: <Mic className="w-5 h-5 text-cyan-400" />, desc: 'Human-parity conversational phone assistants.' },
             { name: 'AI Chatbots', icon: <MessageSquare className="w-5 h-5 text-blue-400" />, desc: 'Omnichannel customer support & lead capture.' },
-            { name: 'Business Automation', icon: <Zap className="w-5 h-5 text-amber-400" />, desc: 'API orchestration, n8n workflows, ERP sync.' },
+            { name: 'Business Automation', icon: <Zap className="w-5 h-5 text-amber-400" />, desc: 'API orchestration, cloud workflows, ERP sync.' },
             { name: 'WhatsApp Automation', icon: <Smartphone className="w-5 h-5 text-emerald-400" />, desc: 'Official Cloud API booking & sales bots.' }
           ].map((item, idx) => (
             <div 
               key={idx}
               onClick={() => onSelectService(item.name)}
-              className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-blue-700/60 cursor-pointer transition-all space-y-2 group"
+              className="p-4 sm:p-5 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-blue-700/60 cursor-pointer transition-all space-y-2 group active:scale-95"
             >
               <div className="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center group-hover:scale-110 transition-transform">
                 {item.icon}
@@ -186,7 +186,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
       </div>
 
       {/* 5. HOW WE WORK (Understand → Plan → Build → Test → Deliver) */}
-      <div className="p-8 sm:p-12 rounded-3xl bg-slate-950 border border-slate-800 space-y-8">
+      <div className="p-6 sm:p-10 lg:p-12 rounded-3xl bg-slate-950 border border-slate-800 space-y-6 sm:space-y-8">
         <div className="text-left space-y-2">
           <div className="text-xs font-semibold uppercase tracking-widest text-cyan-400">
             ENGINEERING METHODOLOGY
@@ -199,11 +199,11 @@ export const AboutPage: React.FC<AboutPageProps> = ({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
           {[
             { step: '01', title: 'UNDERSTAND', desc: 'Deep analysis of workflows, team friction, APIs, and business metrics.' },
             { step: '02', title: 'PLAN', desc: 'Architecting schemas, security perimeters, agent prompt guidelines, and triggers.' },
-            { step: '03', title: 'BUILD', desc: 'Full-stack engineering of models, webhooks, voice telephony, and n8n scripts.' },
+            { step: '03', title: 'BUILD', desc: 'Full-stack engineering of models, webhooks, voice telephony, and autonomous scripts.' },
             { step: '04', title: 'TEST', desc: 'Multi-scenario load testing, prompt injection resistance, and fallback checks.' },
             { step: '05', title: 'DELIVER', desc: 'Production launch, staff training, live telemetry, and ongoing optimization.' }
           ].map((st, idx) => (
@@ -217,11 +217,11 @@ export const AboutPage: React.FC<AboutPageProps> = ({
       </div>
 
       {/* 6. FOUNDER SECTION */}
-      <div className="p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-slate-900 to-[#081120] border border-blue-800/40 shadow-2xl">
+      <div className="p-6 sm:p-10 lg:p-12 rounded-3xl bg-gradient-to-br from-slate-900 to-[#081120] border border-blue-800/40 shadow-2xl">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           
           <div className="lg:col-span-4 flex flex-col items-center sm:items-start text-center sm:text-left space-y-4">
-            <div className="relative w-44 h-44 sm:w-52 sm:h-52 rounded-2xl overflow-hidden border-2 border-blue-600/60 shadow-xl shadow-blue-950/60">
+            <div className="relative w-40 h-40 sm:w-52 sm:h-52 rounded-2xl overflow-hidden border-2 border-blue-600/60 shadow-xl shadow-blue-950/60">
               <img 
                 src={founder.photoUrl} 
                 alt={founder.name}
@@ -238,7 +238,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
 
             {/* Founder Social Links */}
             <div className="flex items-center space-x-2 pt-1">
-              {founder.socials.linkedin && (
+              {founder.socials.linkedin && founder.socialsEnabled?.linkedin !== false && (
                 <a 
                   href={founder.socials.linkedin} 
                   target="_blank" 
@@ -250,7 +250,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
                   <Linkedin className="w-4 h-4" />
                 </a>
               )}
-              {founder.socials.twitter && (
+              {founder.socials.twitter && founder.socialsEnabled?.twitter !== false && (
                 <a 
                   href={founder.socials.twitter} 
                   target="_blank" 
@@ -262,7 +262,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
                   <Twitter className="w-4 h-4" />
                 </a>
               )}
-              {founder.socials.whatsapp && (
+              {founder.socials.whatsapp && founder.socialsEnabled?.whatsapp !== false && (
                 <a 
                   href={`https://wa.me/${founder.socials.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hello Ahsan, I visited AHSAN AI LABS and would like to connect.')}`} 
                   target="_blank" 
@@ -274,7 +274,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
                   <MessageSquare className="w-4 h-4" />
                 </a>
               )}
-              {founder.socials.email && (
+              {founder.socials.email && founder.socialsEnabled?.email !== false && (
                 <a 
                   href={`mailto:${founder.socials.email}`} 
                   className="p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-red-600 transition-colors"
@@ -282,6 +282,18 @@ export const AboutPage: React.FC<AboutPageProps> = ({
                   aria-label="Founder Email"
                 >
                   <Mail className="w-4 h-4" />
+                </a>
+              )}
+              {founder.socials.github && founder.socialsEnabled?.github !== false && (
+                <a 
+                  href={founder.socials.github} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-purple-600 transition-colors"
+                  title="GitHub"
+                  aria-label="Founder GitHub"
+                >
+                  <Github className="w-4 h-4" />
                 </a>
               )}
             </div>
@@ -300,10 +312,10 @@ export const AboutPage: React.FC<AboutPageProps> = ({
               {founder.bio}
             </p>
 
-            <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="pt-3 sm:pt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <button
                 onClick={() => onNavigate('/get-started')}
-                className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-blue-600/30"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-blue-600/30 active:scale-95"
               >
                 <span>Consult With Our Engineering Team</span>
                 <ArrowRight className="w-4 h-4 ml-2" />

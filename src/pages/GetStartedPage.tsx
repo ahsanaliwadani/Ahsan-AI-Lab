@@ -62,7 +62,7 @@ export const GetStartedPage: React.FC<GetStartedPageProps> = ({
     { label: 'AI Agents', icon: <Bot className="w-4 h-4 text-blue-400" />, desc: 'Autonomous multi-step reasoning & task execution' },
     { label: 'AI Voice Agents', icon: <Mic className="w-4 h-4 text-cyan-400" />, desc: 'Inbound & outbound conversational phone assistants' },
     { label: 'AI Chatbots', icon: <MessageSquare className="w-4 h-4 text-blue-400" />, desc: 'Knowledge-grounded website lead generation & support' },
-    { label: 'Business Automation', icon: <Zap className="w-4 h-4 text-amber-400" />, desc: 'End-to-end n8n, CRM, invoice, and API pipelines' },
+    { label: 'Business Automation', icon: <Zap className="w-4 h-4 text-amber-400" />, desc: 'End-to-end CRM, ERP, invoice, and API pipelines' },
     { label: 'WhatsApp Automation', icon: <Smartphone className="w-4 h-4 text-emerald-400" />, desc: 'Official Cloud API booking & conversational funnels' }
   ];
 
@@ -241,7 +241,7 @@ export const GetStartedPage: React.FC<GetStartedPageProps> = ({
               </div>
               <div className="flex items-center space-x-2">
                 <span className="w-2 h-2 rounded-full bg-cyan-400" />
-                <span>n8n automation triggered: Confirmation sent to WhatsApp ({submittedInquiry.whatsapp})</span>
+                <span>Automated dispatch triggered: Confirmation sent to WhatsApp ({submittedInquiry.whatsapp})</span>
               </div>
               <div className="flex items-center space-x-2">
                 <span className="w-2 h-2 rounded-full bg-blue-400" />
@@ -250,10 +250,10 @@ export const GetStartedPage: React.FC<GetStartedPageProps> = ({
             </div>
 
             {/* Next steps */}
-            <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
               <button
                 onClick={() => window.print()}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center justify-center space-x-2"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center justify-center space-x-2 active:scale-95"
               >
                 <Printer className="w-4 h-4" />
                 <span>Print / Save Receipt</span>
@@ -279,14 +279,14 @@ export const GetStartedPage: React.FC<GetStartedPageProps> = ({
                     hp_field: ''
                   });
                 }}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md active:scale-95"
               >
                 Submit Another Project
               </button>
 
               <button
                 onClick={() => onNavigate('/')}
-                className="text-xs text-slate-400 hover:text-white"
+                className="text-xs text-slate-400 hover:text-white py-2"
               >
                 Return to Home
               </button>
@@ -298,7 +298,7 @@ export const GetStartedPage: React.FC<GetStartedPageProps> = ({
         /* INQUIRY ORDER FORM */
         <form 
           onSubmit={handleSubmit}
-          className="p-6 sm:p-10 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-2xl space-y-8"
+          className="p-5 sm:p-10 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-2xl space-y-6 sm:space-y-8"
         >
           {errors.submit && (
             <div className="p-4 rounded-xl bg-red-950/70 border border-red-800 text-red-200 text-xs sm:text-sm flex items-start space-x-2">

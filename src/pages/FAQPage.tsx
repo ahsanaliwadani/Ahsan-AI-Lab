@@ -23,6 +23,36 @@ export const FAQPage: React.FC<FAQPageProps> = ({ faqs, onNavigate }) => {
   });
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
 
+  React.useEffect(() => {
+    document.title = "FAQ | AHSAN AI LABS — Enterprise AI & Automation Answers";
+    if (faqs && faqs.length > 0) {
+      let script = document.getElementById('faqpage-schema') as HTMLScriptElement | null;
+      if (!script) {
+        script = document.createElement('script');
+        script.id = 'faqpage-schema';
+        script.type = 'application/ld+json';
+        document.head.appendChild(script);
+      }
+      const schemaData = {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        '@id': 'https://ahsanailab.bond/faq#faqpage',
+        'url': 'https://ahsanailab.bond/faq',
+        'name': 'AHSAN AI LABS Frequently Asked Questions',
+        'description': 'Comprehensive answers about enterprise AI agents, telephony voice bots, chatbots, workflow automations, and official Meta WhatsApp Cloud API integrations.',
+        'mainEntity': faqs.filter(f => f.published !== false).map(f => ({
+          '@type': 'Question',
+          'name': f.question,
+          'acceptedAnswer': {
+            '@type': 'Answer',
+            'text': f.answer
+          }
+        }))
+      };
+      script.textContent = JSON.stringify(schemaData, null, 2);
+    }
+  }, [faqs]);
+
   const toggleFaq = (id: string) => {
     setOpenIds(prev => ({
       ...prev,
@@ -142,26 +172,26 @@ export const FAQPage: React.FC<FAQPageProps> = ({ faqs, onNavigate }) => {
       </div>
 
       {/* Still Have Questions CTA */}
-      <div className="p-8 rounded-3xl bg-gradient-to-r from-blue-950/60 via-[#081120] to-slate-900 border border-blue-900/40 flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-blue-950/60 via-[#081120] to-slate-900 border border-blue-900/40 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-5 sm:gap-6">
         <div className="space-y-1 text-left">
-          <h3 className="text-lg font-bold font-heading text-white flex items-center">
-            <HelpCircle className="w-5 h-5 mr-2 text-cyan-400" />
+          <h3 className="text-base sm:text-lg font-bold font-heading text-white flex items-center">
+            <HelpCircle className="w-5 h-5 mr-2 text-cyan-400 shrink-0" />
             Have a question not listed here?
           </h3>
           <p className="text-xs sm:text-sm text-slate-300">
             Our engineers are available to review your exact system requirements.
           </p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0">
           <button
             onClick={() => onNavigate('/contact')}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all text-center"
+            className="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all text-center active:scale-95"
           >
             Contact Team
           </button>
           <button
             onClick={() => onNavigate('/get-started')}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/30 text-center"
+            className="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/30 text-center active:scale-95"
           >
             Get Started
           </button>

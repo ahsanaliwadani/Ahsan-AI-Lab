@@ -333,6 +333,13 @@
         "twitter": "https://x.com/ahsanali",
         "email": "ahsan@ahsanailabs.com",
         "whatsapp": "+92 331 6041183"
+      },
+      "socialsEnabled": {
+        "linkedin": true,
+        "twitter": true,
+        "github": true,
+        "email": true,
+        "whatsapp": true
       }
     },
     "about": {
@@ -424,6 +431,14 @@
       "instagram": "https://instagram.com/ahsanailabs",
       "youtube": "https://youtube.com/@ahsanailabs",
       "facebook": "https://facebook.com/ahsanailabs"
+    },
+    "socialLinksEnabled": {
+      "linkedin": true,
+      "twitter": true,
+      "instagram": true,
+      "youtube": true,
+      "facebook": true,
+      "github": true
     },
     "n8nWebhookUrl": "https://n8n-130-110-123-57.nip.io/webhook/order-inquiry",
     "n8nContactWebhookUrl": "https://n8n-130-110-123-57.nip.io/webhook/contact-inquiry",

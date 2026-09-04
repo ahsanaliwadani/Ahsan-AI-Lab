@@ -101,7 +101,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
         {/* Left Col: Contact Channels */}
         <div className="lg:col-span-5 space-y-6">
           
-          <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/60 border border-slate-800 space-y-6">
+          <div className="p-5 sm:p-8 rounded-3xl bg-slate-900/60 border border-slate-800 space-y-6">
             <h3 className="text-xl font-bold font-heading text-white">
               Direct Communication Channels
             </h3>
@@ -170,13 +170,20 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
               </div>
 
               {/* Official Social Media Links */}
-              {settings?.socialLinks && (
+              {Boolean(
+                (settings?.socialLinks?.linkedin && settings?.socialLinksEnabled?.linkedin !== false) ||
+                (settings?.socialLinks?.twitter && settings?.socialLinksEnabled?.twitter !== false) ||
+                (settings?.socialLinks?.instagram && settings?.socialLinksEnabled?.instagram !== false) ||
+                (settings?.socialLinks?.youtube && settings?.socialLinksEnabled?.youtube !== false) ||
+                (settings?.socialLinks?.facebook && settings?.socialLinksEnabled?.facebook !== false) ||
+                (settings?.socialLinks?.github && settings?.socialLinksEnabled?.github !== false)
+              ) && (
                 <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-2">
                   <div className="text-xs font-semibold text-slate-300">
                     Connect On Official Social Channels:
                   </div>
                   <div className="flex flex-wrap gap-2 pt-1">
-                    {settings.socialLinks.linkedin && (
+                    {settings?.socialLinks?.linkedin && settings?.socialLinksEnabled?.linkedin !== false && (
                       <a
                         href={settings.socialLinks.linkedin}
                         target="_blank"
@@ -186,7 +193,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
                         LinkedIn
                       </a>
                     )}
-                    {settings.socialLinks.twitter && (
+                    {settings?.socialLinks?.twitter && settings?.socialLinksEnabled?.twitter !== false && (
                       <a
                         href={settings.socialLinks.twitter}
                         target="_blank"
@@ -196,7 +203,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
                         X (Twitter)
                       </a>
                     )}
-                    {settings.socialLinks.instagram && (
+                    {settings?.socialLinks?.instagram && settings?.socialLinksEnabled?.instagram !== false && (
                       <a
                         href={settings.socialLinks.instagram}
                         target="_blank"
@@ -206,7 +213,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
                         Instagram
                       </a>
                     )}
-                    {settings.socialLinks.youtube && (
+                    {settings?.socialLinks?.youtube && settings?.socialLinksEnabled?.youtube !== false && (
                       <a
                         href={settings.socialLinks.youtube}
                         target="_blank"
@@ -216,7 +223,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
                         YouTube
                       </a>
                     )}
-                    {settings.socialLinks.facebook && (
+                    {settings?.socialLinks?.facebook && settings?.socialLinksEnabled?.facebook !== false && (
                       <a
                         href={settings.socialLinks.facebook}
                         target="_blank"
@@ -224,6 +231,16 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
                         className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:text-white hover:border-blue-600 transition-colors"
                       >
                         Facebook
+                      </a>
+                    )}
+                    {settings?.socialLinks?.github && settings?.socialLinksEnabled?.github !== false && (
+                      <a
+                        href={settings.socialLinks.github}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:text-white hover:border-purple-500 transition-colors"
+                      >
+                        GitHub
                       </a>
                     )}
                   </div>
@@ -253,7 +270,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
 
         {/* Right Col: Simple Consultation Form */}
         <div className="lg:col-span-7">
-          <div className="p-8 sm:p-10 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-2xl">
+          <div className="p-5 sm:p-10 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-2xl">
             <h3 className="text-xl font-bold font-heading text-white mb-2">
               Send a Message
             </h3>

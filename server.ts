@@ -463,7 +463,8 @@ app.get('/api/public/content', (req: Request, res: Response) => {
       whatsappDirectNumber: settings.whatsappDirectNumber,
       address: settings.address,
       officeHours: settings.officeHours,
-      socialLinks: settings.socialLinks
+      socialLinks: settings.socialLinks,
+      socialLinksEnabled: settings.socialLinksEnabled
     };
 
     res.json({
@@ -521,7 +522,8 @@ app.get('/api/public/settings', (req: Request, res: Response) => {
       whatsappDirectNumber: settings.whatsappDirectNumber,
       address: settings.address,
       officeHours: settings.officeHours,
-      socialLinks: settings.socialLinks
+      socialLinks: settings.socialLinks,
+      socialLinksEnabled: settings.socialLinksEnabled
     };
     res.json({ success: true, data: publicSettings });
   } catch (err: any) {
