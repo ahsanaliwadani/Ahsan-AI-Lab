@@ -51,18 +51,16 @@ export const HomePage: React.FC<HomePageProps> = ({
       
       {/* 1. HERO SECTION */}
       <section className="relative pt-28 sm:pt-36 lg:pt-40 pb-12 sm:pb-16 lg:pb-24 overflow-hidden">
-        {/* Futuristic background ambient lighting and cyber grid overlay */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[800px] h-[450px] sm:h-[550px] bg-blue-600/15 rounded-full blur-[120px] sm:blur-[150px] pointer-events-none -z-10" />
-        <div className="absolute top-1/3 right-4 sm:right-10 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-cyan-400/10 rounded-full blur-[100px] sm:blur-[130px] pointer-events-none -z-10" />
+        {/* Futuristic background */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[900px] h-[450px] sm:h-[650px] bg-blue-600/15 rounded-full blur-[120px] sm:blur-[160px] pointer-events-none -z-10" />
+        <div className="absolute top-1/3 right-0 w-[450px] sm:w-[700px] h-[450px] sm:h-[700px] bg-cyan-400/10 rounded-full blur-[120px] sm:blur-[170px] pointer-events-none -z-10" />
         <div className="absolute inset-0 bg-[radial-gradient(#1e3a8a_1px,transparent_1px)] [background-size:24px_24px] opacity-20 pointer-events-none -z-10" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-8 items-center">
-            
-            {/* Hero Left Content */}
-            <div className="lg:col-span-7 space-y-6 sm:space-y-7 text-left">
-              
-              {/* High-Tech Radar Badge */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-4 items-center">
+
+            {/* HERO LEFT CONTENT */}
+            <div className="lg:col-span-6 xl:col-span-6 space-y-6 sm:space-y-7 text-left relative z-10">
               <div className="inline-flex items-center space-x-2.5 px-3.5 sm:px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-950/90 via-slate-900/90 to-cyan-950/90 border border-cyan-500/40 text-xs font-semibold text-cyan-300 backdrop-blur-md shadow-lg shadow-cyan-950/40 max-w-full">
                 <span className="relative flex h-2.5 w-2.5 shrink-0">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
@@ -73,21 +71,19 @@ export const HomePage: React.FC<HomePageProps> = ({
                 </span>
               </div>
 
-              {/* Headline */}
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-heading text-white tracking-tight leading-[1.12]">
-                BUILD A SMARTER <br className="hidden sm:inline" />
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold font-heading text-white tracking-tight leading-[1.05]">
+                BUILD A SMARTER
+                <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-500 drop-shadow-[0_0_25px_rgba(0,210,255,0.25)]">
                   BUSINESS WITH AI.
                 </span>
               </h1>
 
-              {/* Supporting Subtitle */}
               <p className="text-sm sm:text-base lg:text-lg text-slate-300 max-w-2xl font-normal leading-relaxed">
-                {content?.hero?.subtitle || 
+                {content?.hero?.subtitle ||
                   'We engineer enterprise-grade AI agents, telephony voice assistants, intelligent chatbots, automated business pipelines, and Meta WhatsApp digital systems that empower companies to scale effortlessly.'}
               </p>
 
-              {/* CTAs */}
               <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 sm:gap-4">
                 <button
                   onClick={() => onNavigate('/get-started')}
@@ -105,6 +101,105 @@ export const HomePage: React.FC<HomePageProps> = ({
                 </button>
               </div>
             </div>
+
+            {/* HERO RIGHT - AI ECOSYSTEM VISUAL */}
+            <div className="lg:col-span-6 xl:col-span-6 relative min-h-[430px] sm:min-h-[500px] lg:min-h-[580px] flex items-center justify-center">
+              {/* Decorative world / data field */}
+              <div className="absolute inset-4 sm:inset-0 rounded-full opacity-60 bg-[radial-gradient(circle_at_center,rgba(14,165,233,0.18)_0,transparent_42%)]" />
+              <div className="absolute left-1/2 top-1/2 w-[82%] h-[58%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-500/20 shadow-[0_0_90px_rgba(14,165,233,0.12)]" />
+              <div className="absolute left-1/2 top-1/2 w-[64%] h-[44%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-500/20" />
+
+              {/* Animated data orbit lines */}
+              <div className="absolute left-[10%] top-[42%] w-[78%] h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent rotate-[-18deg]" />
+              <div className="absolute left-[10%] top-[50%] w-[78%] h-px bg-gradient-to-r from-transparent via-blue-400/50 to-transparent rotate-[12deg]" />
+              <div className="absolute left-[20%] top-[25%] w-[58%] h-px bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent rotate-[28deg]" />
+
+              {/* Floating AI service cards */}
+              <div className="absolute left-0 sm:left-2 top-[18%] z-20 rounded-2xl border border-cyan-500/30 bg-slate-950/85 backdrop-blur-xl px-3 sm:px-4 py-3 shadow-xl shadow-cyan-950/30 animate-[pulse_4s_ease-in-out_infinite]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-cyan-950/70 border border-cyan-500/30 flex items-center justify-center">
+                    <Bot className="w-4 h-4 text-cyan-300" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] sm:text-xs font-bold text-white tracking-wide">AI AGENTS</div>
+                    <div className="text-[9px] sm:text-[10px] text-slate-400">Smart Automation</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute right-0 sm:right-2 top-[18%] z-20 rounded-2xl border border-blue-500/30 bg-slate-950/85 backdrop-blur-xl px-3 sm:px-4 py-3 shadow-xl shadow-blue-950/30">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-blue-950/70 border border-blue-500/30 flex items-center justify-center">
+                    <Mic className="w-4 h-4 text-blue-300" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] sm:text-xs font-bold text-white tracking-wide">AI VOICE</div>
+                    <div className="text-[9px] sm:text-[10px] text-slate-400">Voice Assistants</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute left-0 sm:left-0 top-[48%] z-20 rounded-2xl border border-cyan-500/30 bg-slate-950/85 backdrop-blur-xl px-3 sm:px-4 py-3 shadow-xl shadow-cyan-950/30">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-cyan-950/70 border border-cyan-500/30 flex items-center justify-center">
+                    <MessageSquare className="w-4 h-4 text-cyan-300" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] sm:text-xs font-bold text-white tracking-wide">AI CHATBOTS</div>
+                    <div className="text-[9px] sm:text-[10px] text-slate-400">24/7 Support</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute right-0 sm:right-0 top-[48%] z-20 rounded-2xl border border-emerald-500/30 bg-slate-950/85 backdrop-blur-xl px-3 sm:px-4 py-3 shadow-xl shadow-emerald-950/30">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-950/70 border border-emerald-500/30 flex items-center justify-center">
+                    <TrendingUp className="w-4 h-4 text-emerald-300" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] sm:text-xs font-bold text-white tracking-wide">BUSINESS</div>
+                    <div className="text-[9px] sm:text-[10px] text-slate-400">Grow & Scale</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute right-[2%] sm:right-[4%] bottom-[13%] z-20 rounded-2xl border border-emerald-500/30 bg-slate-950/85 backdrop-blur-xl px-3 sm:px-4 py-3 shadow-xl shadow-emerald-950/30">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-950/70 border border-emerald-500/30 flex items-center justify-center">
+                    <Smartphone className="w-4 h-4 text-emerald-300" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] sm:text-xs font-bold text-white tracking-wide">WHATSAPP</div>
+                    <div className="text-[9px] sm:text-[10px] text-slate-400">API Integration</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Main glowing platform */}
+              <div className="absolute left-1/2 bottom-[4%] sm:bottom-[5%] -translate-x-1/2 w-[70%] sm:w-[64%] h-24 sm:h-28 z-10">
+                <div className="absolute inset-x-[8%] bottom-0 h-10 rounded-[50%] border border-cyan-400/30 bg-blue-950/60 blur-[1px] shadow-[0_0_45px_rgba(6,182,212,0.35)]" />
+                <div className="absolute inset-x-[13%] bottom-3 h-10 rounded-[50%] border border-cyan-400/40 bg-gradient-to-r from-blue-950 via-cyan-950 to-blue-950" />
+                <div className="absolute inset-x-[20%] bottom-8 h-8 rounded-[50%] bg-cyan-400/25 blur-md" />
+              </div>
+
+              {/* Main logo / hologram */}
+              <div className="relative z-10 w-44 h-44 sm:w-56 sm:h-56 lg:w-64 lg:h-64 rounded-[2rem] border border-cyan-400/20 bg-gradient-to-br from-blue-950/50 via-slate-950/40 to-cyan-950/50 backdrop-blur-md shadow-[0_0_80px_rgba(14,165,233,0.25)] flex items-center justify-center animate-[pulse_5s_ease-in-out_infinite]">
+                <div className="absolute inset-3 rounded-[1.5rem] border border-cyan-400/15" />
+                <div className="absolute inset-0 rounded-[2rem] bg-cyan-400/5 blur-xl" />
+                <img
+                  src="/logo.png"
+                  alt="Ahsan AI Labs"
+                  className="relative z-10 w-[68%] h-[68%] object-contain drop-shadow-[0_0_30px_rgba(34,211,238,0.75)]"
+                />
+              </div>
+
+              {/* Small glowing network nodes */}
+              <span className="absolute left-[30%] top-[27%] w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_18px_rgba(34,211,238,1)]" />
+              <span className="absolute right-[29%] top-[34%] w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_18px_rgba(96,165,250,1)]" />
+              <span className="absolute left-[25%] bottom-[28%] w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_18px_rgba(96,165,250,1)]" />
+              <span className="absolute right-[24%] bottom-[30%] w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_18px_rgba(34,211,238,1)]" />
+            </div>
+
           </div>
         </div>
       </section>
