@@ -100,6 +100,69 @@ export const HomePage: React.FC<HomePageProps> = ({
                   <span>EXPLORE SERVICES</span>
                 </button>
               </div>
+
+              {/* HERO SERVICE QUICK ACCESS */}
+              <div className="pt-2 sm:pt-4 grid grid-cols-2 gap-3 sm:gap-4 max-w-2xl">
+                <button
+                  onClick={() => onSelectService('AI Agents')}
+                  className="group text-left rounded-2xl border border-cyan-500/20 bg-slate-950/55 hover:bg-slate-900/80 hover:border-cyan-400/50 backdrop-blur-xl p-3.5 sm:p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-950/30"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl bg-cyan-950/60 border border-cyan-500/25 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Bot className="w-5 h-5 text-cyan-300" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs sm:text-sm font-bold text-white tracking-wide truncate">AI AGENTS</div>
+                      <div className="text-[10px] sm:text-xs text-slate-400 mt-0.5 truncate">Smart Automation</div>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => onSelectService('AI Voice Agents')}
+                  className="group text-left rounded-2xl border border-blue-500/20 bg-slate-950/55 hover:bg-slate-900/80 hover:border-blue-400/50 backdrop-blur-xl p-3.5 sm:p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-950/30"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl bg-blue-950/60 border border-blue-500/25 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Mic className="w-5 h-5 text-blue-300" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs sm:text-sm font-bold text-white tracking-wide truncate">AI VOICE</div>
+                      <div className="text-[10px] sm:text-xs text-slate-400 mt-0.5 truncate">Voice Assistants</div>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => onSelectService('AI Chatbots')}
+                  className="group text-left rounded-2xl border border-sky-500/20 bg-slate-950/55 hover:bg-slate-900/80 hover:border-sky-400/50 backdrop-blur-xl p-3.5 sm:p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-sky-950/30"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl bg-sky-950/60 border border-sky-500/25 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <MessageSquare className="w-5 h-5 text-sky-300" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs sm:text-sm font-bold text-white tracking-wide truncate">AI CHATBOTS</div>
+                      <div className="text-[10px] sm:text-xs text-slate-400 mt-0.5 truncate">24/7 Support</div>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => onSelectService('WhatsApp Automation')}
+                  className="group text-left rounded-2xl border border-emerald-500/20 bg-slate-950/55 hover:bg-slate-900/80 hover:border-emerald-400/50 backdrop-blur-xl p-3.5 sm:p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-950/30"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl bg-emerald-950/60 border border-emerald-500/25 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Smartphone className="w-5 h-5 text-emerald-300" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs sm:text-sm font-bold text-white tracking-wide truncate">WHATSAPP</div>
+                      <div className="text-[10px] sm:text-xs text-slate-400 mt-0.5 truncate">API & Automation</div>
+                    </div>
+                  </div>
+                </button>
+              </div>
             </div>
 
             {/* HERO RIGHT - AI ECOSYSTEM VISUAL */}
