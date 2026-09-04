@@ -1,0 +1,463 @@
+{
+  "inquiries": [],
+  "services": [
+    {
+      "_id": "srv_1",
+      "slug": "ai-agents",
+      "name": "AI Agents",
+      "iconName": "Bot",
+      "tagline": "Autonomous Intelligent Systems for Complex Operations",
+      "shortDescription": "Autonomous AI agents that understand context, execute multi-step workflows, gather intelligence, and assist customers 24/7.",
+      "fullDescription": "Our custom AI agents are intelligent autonomous systems designed to communicate with customers, process complex documents, perform lead qualification, and execute multi-step business tasks without manual intervention.",
+      "features": [
+        "24/7 autonomous task execution and error recovery",
+        "Advanced multi-turn reasoning and long-term memory",
+        "Seamless lead qualification and CRM ingestion",
+        "Structured information retrieval from internal databases",
+        "Automated document verification and data extraction",
+        "Real-time multi-platform triggers and webhooks"
+      ],
+      "capabilities": [
+        "Multi-modal input handling (Text, Documents, Structured Data)",
+        "Self-correcting workflow loops and fallback protocols",
+        "Role-based security boundaries and confidential data masking",
+        "Sub-second latency with edge response caching"
+      ],
+      "useCases": [
+        {
+          "title": "Enterprise Customer Support",
+          "desc": "Resolves 80%+ of Tier-1 and Tier-2 technical support tickets with deep product knowledge."
+        },
+        {
+          "title": "Automated Sales Pipeline",
+          "desc": "Evaluates incoming leads, scores intent, enriches profiles, and books qualified meetings directly into calendars."
+        },
+        {
+          "title": "Operations & Document Processing",
+          "desc": "Parses invoices, contracts, and vendor forms, validating data against ERP systems automatically."
+        }
+      ],
+      "benefits": [
+        "Reduce customer response time from hours to under 3 seconds",
+        "Cut operational labor overhead on repetitive tasks by up to 70%",
+        "Eliminate human data entry errors in CRM and ERP records"
+      ],
+      "demoVideoUrl": "",
+      "demoVideoThumbnail": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
+      "ctaText": "REQUEST AI AGENT",
+      "displayOrder": 1,
+      "published": true,
+      "badge": "Popular"
+    },
+    {
+      "_id": "srv_2",
+      "slug": "ai-voice-agents",
+      "name": "AI Voice Agents",
+      "iconName": "Mic",
+      "tagline": "Human-Parity Conversational Telephony & Voice AI",
+      "shortDescription": "Ultra-low latency conversational AI voice assistants that handle inbound client calls, book appointments, and route calls with human warmth.",
+      "fullDescription": "Deploy natural-sounding voice agents capable of conducting fluent, conversational telephone calls. Handles high-volume inbound inquiries, outbound lead qualification, appointment rescheduling, and emergency escalation.",
+      "features": [
+        "Ultra-low latency audio processing (<450ms turnaround)",
+        "Natural conversational cadence with interruption handling",
+        "Telephony integration (Twilio, Vonage, SIP Trunks, PBX)",
+        "Live dynamic call transfers to human agents on trigger",
+        "Automated call transcription, sentiment analysis & CRM logging",
+        "Custom brand voice cloning and multi-accent support"
+      ],
+      "capabilities": [
+        "Instant calendar booking with real-time slot conflict resolution",
+        "Dynamic variable injection for personalized customer greetings",
+        "High-concurrency handling (1,000+ simultaneous voice lines)"
+      ],
+      "useCases": [
+        {
+          "title": "Healthcare & Clinic Reception",
+          "desc": "Handles patient appointment bookings, reminder confirmations, and insurance pre-intake over the phone."
+        },
+        {
+          "title": "Real Estate & Financial Inquiries",
+          "desc": "Pre-screens prospective buyers or loan applicants via friendly outbound & inbound phone interviews."
+        },
+        {
+          "title": "After-Hours Emergency Dispatch",
+          "desc": "Triages urgent service requests 24/7 and dispatches field technicians when thresholds are met."
+        }
+      ],
+      "benefits": [
+        "Never miss an inbound customer phone call or after-hours inquiry",
+        "Scale phone support capacity infinitely without increasing staff headcount",
+        "Instant post-call summaries delivered directly to WhatsApp and Slack"
+      ],
+      "demoVideoUrl": "",
+      "demoVideoThumbnail": "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=1200&q=80",
+      "ctaText": "REQUEST VOICE AGENT",
+      "displayOrder": 2,
+      "published": true,
+      "badge": "High Impact"
+    },
+    {
+      "_id": "srv_3",
+      "slug": "ai-chatbots",
+      "name": "AI Chatbots",
+      "iconName": "MessageSquare",
+      "tagline": "Tailored Omnichannel Conversational Intelligence",
+      "shortDescription": "Custom trained conversational chatbots embedded on your website, app, and portals for instant lead capture and technical guidance.",
+      "fullDescription": "Transform website visitors into active clients. Our bespoke chatbots are grounded entirely on your company knowledge base, answering pricing, technical queries, and onboarding steps with precision.",
+      "features": [
+        "Trained strictly on your website, PDFs, and documentation",
+        "Zero hallucination boundaries with verified citation grounding",
+        "Custom styled widget matching your brand colors and typography",
+        "Interactive form inputs, calendars, and pricing estimators inside chat",
+        "Direct handoff to human support representatives via Live Chat",
+        "Multi-language auto-detection and fluent translation"
+      ],
+      "capabilities": [
+        "Context-aware suggestion chips that guide user discovery",
+        "Automatic conversation summary dispatched to team email or CRM",
+        "Real-time conversation analytics and sentiment tracking"
+      ],
+      "useCases": [
+        {
+          "title": "B2B SaaS Lead Generator",
+          "desc": "Engages high-intent website visitors, answers technical security questions, and schedules demos."
+        },
+        {
+          "title": "E-Commerce Shopping Assistant",
+          "desc": "Recommends products, answers shipping and return policies, and recovers abandoned sessions."
+        },
+        {
+          "title": "Internal Employee Knowledge Portal",
+          "desc": "Answers staff HR, IT, and policy questions from company handbooks instantly."
+        }
+      ],
+      "benefits": [
+        "Triple website visitor lead conversion rates",
+        "Provide instant, accurate answers around the clock with zero wait time",
+        "Free your support team to focus on high-value complex tickets"
+      ],
+      "demoVideoUrl": "",
+      "demoVideoThumbnail": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1200&q=80",
+      "ctaText": "REQUEST CHATBOT",
+      "displayOrder": 3,
+      "published": true,
+      "badge": "Fast Setup"
+    },
+    {
+      "_id": "srv_4",
+      "slug": "business-automation",
+      "name": "Business Automation",
+      "iconName": "Zap",
+      "tagline": "End-to-End Workflow Architecture & API Orchestration",
+      "shortDescription": "Eliminate manual friction with automated pipelines connecting your CRM, database, accounting, emails, and internal enterprise tools.",
+      "fullDescription": "We architect enterprise automation workflows that synchronize fragmented applications, trigger automated invoicing, scrape market signals, and automate your back-office operations end-to-end.",
+      "features": [
+        "Custom n8n, Make, and Python workflow architectures",
+        "Enterprise API integrations (HubSpot, Salesforce, Stripe, QuickBooks)",
+        "Automated document generation (PDF contracts, proposals, invoices)",
+        "Scheduled data ETL pipelines, deduplication, and synchronization",
+        "Automated email marketing sequences and lead re-engagement",
+        "Proactive system health monitoring and error alerting"
+      ],
+      "capabilities": [
+        "Complex conditional logic branching and multi-tier approvals",
+        "High-throughput webhooks processing thousands of events/sec",
+        "Encrypted credential vaults and audit-compliant data flows"
+      ],
+      "useCases": [
+        {
+          "title": "Contract & Invoice Generation",
+          "desc": "When a deal closes in CRM, contracts are generated, sent for e-signature, and invoices created in Stripe."
+        },
+        {
+          "title": "Cross-Platform Data Synchronization",
+          "desc": "Syncs inventories, customer profiles, and order states between Shopify, Google Sheets, and ERP."
+        },
+        {
+          "title": "Automated Reporting & Analytics",
+          "desc": "Aggregates weekly KPIs across advertising channels and sends automated executive PDF digests."
+        }
+      ],
+      "benefits": [
+        "Save 20+ hours per employee per week on manual copy-pasting and data entry",
+        "Accelerate sales transaction turnaround from days to minutes",
+        "Zero dropped leads or forgotten follow-up emails"
+      ],
+      "demoVideoUrl": "",
+      "demoVideoThumbnail": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80",
+      "ctaText": "AUTOMATE MY BUSINESS",
+      "displayOrder": 4,
+      "published": true,
+      "badge": "Enterprise"
+    },
+    {
+      "_id": "srv_5",
+      "slug": "whatsapp-automation",
+      "name": "WhatsApp Automation",
+      "iconName": "Smartphone",
+      "tagline": "Official Cloud API Business Bots & Conversational Funnels",
+      "shortDescription": "High-converting WhatsApp Business flows with interactive catalog browsing, instant quotes, automated follow-ups, and support routing.",
+      "fullDescription": "Harness the world's most active messaging platform with official WhatsApp Business Cloud API automation. Build interactive conversational menus, automatic booking confirmations, and AI-assisted customer servicing.",
+      "features": [
+        "Official WhatsApp Business Cloud API setup & verification",
+        "Interactive button menus, list pickers, and product carousels",
+        "Instant AI-powered FAQ answering and objection handling",
+        "Automated appointment, payment, and shipping update alerts",
+        "Broadcast marketing engine with segmentation & delivery analytics",
+        "Multi-agent shared team inbox integration"
+      ],
+      "capabilities": [
+        "Direct CRM contact creation and conversational history logging",
+        "Payment links generation directly inside WhatsApp chats",
+        "Template message compliance and 24-hour customer window management"
+      ],
+      "useCases": [
+        {
+          "title": "E-Commerce Order Updates & Cart Recovery",
+          "desc": "Sends tracking numbers, re-orders, and recovers abandoned carts directly on WhatsApp."
+        },
+        {
+          "title": "Local Services Booking Bot",
+          "desc": "Clients select service packages, pick dates, and receive automated reminders on their phones."
+        },
+        {
+          "title": "VIP Client & Partner Support Hub",
+          "desc": "Provides high-priority clients with immediate AI troubleshooting and dedicated account routing."
+        }
+      ],
+      "benefits": [
+        "Enjoy 98% message open rates compared to 20% on traditional email",
+        "Speed up customer purchase decisions with instant interactive buttons",
+        "Automate customer onboarding in the messaging app they use daily"
+      ],
+      "demoVideoUrl": "",
+      "demoVideoThumbnail": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=1200&q=80",
+      "ctaText": "AUTOMATE WHATSAPP",
+      "displayOrder": 5,
+      "published": true,
+      "badge": "Essential"
+    }
+  ],
+  "demos": [],
+  "faqs": [
+    {
+      "_id": "faq_1",
+      "question": "What services does AHSAN AI LABS provide?",
+      "answer": "We specialize in five core pillars of modern enterprise technology: 1) Custom AI Agents for multi-step reasoning, 2) AI Voice Agents for human-parity telephony, 3) AI Chatbots for website lead capture and support, 4) End-to-end Business Automation pipelines, and 5) Official WhatsApp Cloud API Automation solutions.",
+      "category": "Services",
+      "displayOrder": 1,
+      "published": true,
+      "createdAt": "2026-09-04T07:34:54.058Z"
+    },
+    {
+      "_id": "faq_2",
+      "question": "What is the difference between an AI Chatbot and an AI Agent?",
+      "answer": "While an AI Chatbot specializes in conversational Q&A and guiding visitors, an AI Agent has \"agency\"—it possesses tools and permissions to execute multi-step workflows autonomously, such as querying databases, verifying credentials, updating CRM records, triggering webhooks, and executing code.",
+      "category": "Technology",
+      "displayOrder": 2,
+      "published": true,
+      "createdAt": "2026-09-04T07:34:54.059Z"
+    },
+    {
+      "_id": "faq_3",
+      "question": "What is an AI Voice Agent and how does it integrate with phone numbers?",
+      "answer": "An AI Voice Agent is a conversational voice assistant that operates over standard telephony. It connects directly to your existing business phone numbers (via SIP, Twilio, or PBX), answers with ultra-low latency (<450ms), understands complex customer speech, and can transfer callers or book calendar appointments live.",
+      "category": "Voice AI",
+      "displayOrder": 3,
+      "published": true,
+      "createdAt": "2026-09-04T07:34:54.059Z"
+    },
+    {
+      "_id": "faq_4",
+      "question": "Can you build custom AI solutions tailored to our proprietary business data?",
+      "answer": "Yes, 100%. Every system we deliver is custom engineered for your specific workflows, APIs, data privacy constraints, and brand voice. We do not use cookie-cutter templates.",
+      "category": "Customization",
+      "displayOrder": 4,
+      "published": true,
+      "createdAt": "2026-09-04T07:34:54.059Z"
+    },
+    {
+      "_id": "faq_5",
+      "question": "Can you automate our WhatsApp Business communication safely?",
+      "answer": "Yes. We build directly on the official Meta WhatsApp Business Cloud API, ensuring high delivery rates, zero ban risk, verified green-badge support, interactive button UI, and full compliance with Meta's business messaging standards.",
+      "category": "WhatsApp",
+      "displayOrder": 5,
+      "published": true,
+      "createdAt": "2026-09-04T07:34:54.059Z"
+    },
+    {
+      "_id": "faq_6",
+      "question": "How does the project process work from start to finish?",
+      "answer": "Our process is structured in five clear phases: 01) Explore your needs, 02) Submit detailed requirements via our inquiry portal, 03) Architecture & Scope Review by our engineering team, 04) Direct consultation via your preferred channel (WhatsApp/Call/Email), and 05) Build, rigorous test, and deployment with ongoing support.",
+      "category": "Process",
+      "displayOrder": 6,
+      "published": true,
+      "createdAt": "2026-09-04T07:34:54.059Z"
+    },
+    {
+      "_id": "faq_7",
+      "question": "How long does development and deployment typically take?",
+      "answer": "Typical turnaround times depend on project scope. Focused solutions (such as an AI Chatbot or WhatsApp Automation bot) typically launch within 5 to 10 business days. Complex multi-system business automation pipelines or telephony voice agents typically take 2 to 4 weeks.",
+      "category": "Timeline",
+      "displayOrder": 7,
+      "published": true,
+      "createdAt": "2026-09-04T07:34:54.059Z"
+    },
+    {
+      "_id": "faq_8",
+      "question": "How will your team contact me once I submit an inquiry?",
+      "answer": "You choose your preferred contact method on our Get Started form (WhatsApp, Email, or Phone Call). You will receive an instant automated confirmation with your unique Inquiry ID, and an AI Systems Specialist will reach out within 4 to 24 business hours.",
+      "category": "Inquiries",
+      "displayOrder": 8,
+      "published": true,
+      "createdAt": "2026-09-04T07:34:54.059Z"
+    }
+  ],
+  "content": {
+    "hero": {
+      "badge": "ENTERPRISE AI & AUTOMATION SYSTEMS",
+      "title": "BUILD A SMARTER BUSINESS WITH AI.",
+      "highlight": "INTELLIGENCE. AUTOMATION. INNOVATION.",
+      "subtitle": "We build intelligent AI agents, voice agents, chatbots, automation systems, and WhatsApp solutions that help businesses work smarter, faster, and more efficiently.",
+      "primaryCta": "GET STARTED",
+      "secondaryCta": "EXPLORE SERVICES"
+    },
+    "founder": {
+      "name": "Ahsan Ali",
+      "title": "Founder & Principal AI Systems Architect",
+      "bio": "Ahsan Ali is an AI automation architect and engineer dedicated to helping forward-thinking enterprises bridge the gap between cutting-edge artificial intelligence and high-ROI business operations. With deep expertise across autonomous agents, telephony voice AI, and scalable API orchestration, Ahsan leads the engineering team at AHSAN AI LABS to deliver robust, enterprise-grade digital systems.",
+      "photoUrl": "/founder.jpg",
+      "quote": "True business transformation happens when artificial intelligence moves from theoretical experiments into reliable, everyday autonomous execution.",
+      "socials": {
+        "linkedin": "https://linkedin.com/in/ahsanali",
+        "twitter": "https://x.com/ahsanali",
+        "email": "ahsan@ahsanailabs.com",
+        "whatsapp": "+92 331 6041183"
+      }
+    },
+    "about": {
+      "mission": "To empower modern businesses with resilient, enterprise-grade AI and automation systems that eliminate manual friction, accelerate execution, and maximize profitability.",
+      "vision": "To build the digital infrastructure of tomorrow—where intelligent autonomous agents and automated workflows power seamless global enterprise operations.",
+      "companyDescription": "AHSAN AI LABS is an international technology company focused exclusively on practical, production-ready AI and automation solutions. We don't build novelty toys or empty concepts; we build mission-critical systems that drive measurable ROI.",
+      "pillars": [
+        {
+          "title": "Business-Focused Architecture",
+          "desc": "Every line of code and automation flow is designed around concrete KPIs: saving hours, capturing revenue, and eliminating operational errors."
+        },
+        {
+          "title": "Custom AI Engineering",
+          "desc": "We build bespoke models, custom tool-use bindings, and fine-tuned knowledge retrieval engines tailored to your proprietary data."
+        },
+        {
+          "title": "Automation-First Approach",
+          "desc": "We interconnect your existing tech stack seamlessly so data flows effortlessly across CRM, communications, and back-office tools."
+        },
+        {
+          "title": "Enterprise Reliability & Security",
+          "desc": "Robust data governance, encrypted credentials, fail-safe fallbacks, and zero plain-text data exposure."
+        }
+      ],
+      "processSteps": [
+        {
+          "step": "01",
+          "title": "UNDERSTAND & DISCOVERY",
+          "description": "We analyze your current business workflows, bottlenecks, communication channels, and target metrics."
+        },
+        {
+          "step": "02",
+          "title": "ARCHITECTURE & PLANNING",
+          "description": "We design the technical blueprint, specifying agent logic, database schemas, integrations, and fallback protocols."
+        },
+        {
+          "step": "03",
+          "title": "CUSTOM DEVELOPMENT",
+          "description": "Our team builds the AI models, voice telephony pipelines, n8n automations, and custom UI components."
+        },
+        {
+          "step": "04",
+          "title": "RIGOROUS TESTING & QA",
+          "description": "We test across edge cases, concurrency spikes, prompt injection attempts, and multi-platform scenarios."
+        },
+        {
+          "step": "05",
+          "title": "DEPLOYMENT & SCALING",
+          "description": "We launch into production, connect real-time monitoring, train your team, and provide ongoing optimization."
+        }
+      ]
+    },
+    "metrics": [
+      {
+        "label": "Automated Operations Saved",
+        "value": "45,000+",
+        "suffix": "Hours"
+      },
+      {
+        "label": "Enterprise Systems Deployed",
+        "value": "120+",
+        "suffix": "Projects"
+      },
+      {
+        "label": "Average Response Time",
+        "value": "< 3",
+        "suffix": "Seconds"
+      },
+      {
+        "label": "Client Satisfaction Score",
+        "value": "99.4",
+        "suffix": "%"
+      }
+    ]
+  },
+  "settings": {
+    "companyName": "AHSAN AI LABS",
+    "tagline": "INTELLIGENCE. AUTOMATION. INNOVATION.",
+    "logoText": "AHSAN AI LABS",
+    "siteUrl": "https://ahsanailab.bond",
+    "primaryEmail": "contact@ahsanailabs.com",
+    "supportWhatsApp": "+92 331 6041183",
+    "whatsappDirectNumber": "923316041183",
+    "address": "Global Technology Labs • Available Worldwide",
+    "officeHours": "Monday – Saturday: 24/7 Enterprise Coverage",
+    "socialLinks": {
+      "linkedin": "https://linkedin.com/company/ahsan-ai-labs",
+      "twitter": "https://x.com/ahsanailabs",
+      "instagram": "https://instagram.com/ahsanailabs",
+      "youtube": "https://youtube.com/@ahsanailabs",
+      "facebook": "https://facebook.com/ahsanailabs"
+    },
+    "n8nWebhookUrl": "https://n8n-130-110-123-57.nip.io/webhook/order-inquiry",
+    "n8nContactWebhookUrl": "https://n8n-130-110-123-57.nip.io/webhook/contact-inquiry",
+    "n8nOrderWebhookUrl": "https://n8n-130-110-123-57.nip.io/webhook/order-inquiry",
+    "n8nWebhookSecret": "",
+    "n8nEnabled": true,
+    "n8nContactEnabled": true,
+    "n8nOrderEnabled": true,
+    "emailNotificationsEnabled": true,
+    "whatsappNotificationsEnabled": true
+  },
+  "auditLogs": [
+    {
+      "_id": "audit_init",
+      "adminEmail": "system@ahsanailabs.com",
+      "action": "SYSTEM_INITIALIZED",
+      "targetType": "SYSTEM",
+      "details": "AHSAN AI LABS enterprise platform initialized with durable file persistence and MongoDB architecture.",
+      "timestamp": "2026-09-04T07:34:54.059Z"
+    }
+  ],
+  "admins": [
+    {
+      "_id": "admin_primary",
+      "email": "admin@ahsanailabs.com",
+      "name": "Ahsan Ali (Super Admin)",
+      "role": "SUPER_ADMIN",
+      "passwordHash": "$2b$10$fmT43M5BwKid1ygSAqyeCeiwgZxKKJoZtyKfzm4azsdsRVycXnKWm",
+      "lastLogin": "2026-09-04T07:34:54.159Z"
+    }
+  ],
+  "analyticsEvents": [],
+  "webVitals": [],
+  "errorLogs": [],
+  "uptimeChecks": [],
+  "systemAlerts": []
+}

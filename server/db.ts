@@ -252,110 +252,9 @@ const initialServices: ServiceItem[] = [
   }
 ];
 
-const initialDemos: DemoItem[] = [
-  {
-    _id: 'demo_1',
-    title: 'Autonomous Enterprise Support & CRM Agent',
-    slug: 'autonomous-enterprise-support-agent',
-    category: 'AI AGENTS',
-    description: 'Walkthrough of an autonomous AI agent resolving a multi-tier technical support inquiry, verifying account permissions, and updating CRM records without human delay.',
-    features: ['Contextual Memory', 'CRM Bi-directional Sync', 'Ticket Triage', 'Security Validation'],
-    thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
-    videoUrl: 'https://www.youtube.com/watch?v=sPbc3GHcko0',
-    duration: '03:45',
-    clientIndustry: 'FinTech & B2B SaaS',
-    keyImpact: '91% First-Contact Resolution Rate',
-    published: true,
-    featured: true,
-    displayOrder: 1,
-    createdAt: new Date().toISOString()
-  },
-  {
-    _id: 'demo_2',
-    title: 'Real-Time Medical Clinic Inbound Voice Agent',
-    slug: 'medical-clinic-voice-agent',
-    category: 'AI VOICE AGENTS',
-    description: 'Demonstration of an ultra-low latency AI voice assistant handling an inbound patient call, verifying insurance eligibility, and booking an appointment into Google Calendar.',
-    features: ['<400ms Response', 'Interruption Handling', 'EMR/Calendar Sync', 'Warm Voice Cadence'],
-    thumbnail: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=1200&q=80',
-    videoUrl: 'https://www.youtube.com/watch?v=o0_dC_uXG5g',
-    duration: '04:12',
-    clientIndustry: 'Healthcare & Wellness',
-    keyImpact: 'Zero Missed After-Hours Calls',
-    published: true,
-    featured: true,
-    displayOrder: 2,
-    createdAt: new Date().toISOString()
-  },
-  {
-    _id: 'demo_3',
-    title: 'Omnichannel Real Estate Lead Qualifier Chatbot',
-    slug: 'real-estate-lead-chatbot',
-    category: 'AI CHATBOTS',
-    description: 'Showcase of a customized website chatbot that qualifies high-net-worth real estate prospects, displays interactive property carousels, and sends an instant WhatsApp alert to the broker.',
-    features: ['Knowledge Grounding', 'Budget Pre-qualification', 'Interactive Sliders', 'Instant SMS/WhatsApp Notification'],
-    thumbnail: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1200&q=80',
-    videoUrl: 'https://www.youtube.com/watch?v=zp1R3n3K99k',
-    duration: '02:50',
-    clientIndustry: 'Luxury Real Estate',
-    keyImpact: '4.2x Increase in Lead Capture',
-    published: true,
-    featured: true,
-    displayOrder: 3,
-    createdAt: new Date().toISOString()
-  },
-  {
-    _id: 'demo_4',
-    title: 'Automated Invoice & Contract Generation Pipeline',
-    slug: 'automated-invoice-contract-pipeline',
-    category: 'BUSINESS AUTOMATION',
-    description: 'A deep dive into an n8n enterprise workflow that turns accepted client proposals into signed contracts, generates accounting invoices, and creates private client communication channels.',
-    features: ['Multi-System Orchestration', 'DocuSign API', 'Stripe Billing', 'Automated Slack Room Creation'],
-    thumbnail: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80',
-    videoUrl: 'https://www.youtube.com/watch?v=0h9bZg-sU1Y',
-    duration: '05:15',
-    clientIndustry: 'Legal & Management Consulting',
-    keyImpact: 'Saved 28 Hours / Week',
-    published: true,
-    featured: false,
-    displayOrder: 4,
-    createdAt: new Date().toISOString()
-  },
-  {
-    _id: 'demo_5',
-    title: 'WhatsApp Official Cloud API Customer Journey',
-    slug: 'whatsapp-cloud-api-customer-journey',
-    category: 'WHATSAPP AUTOMATION',
-    description: 'Walkthrough of an automated WhatsApp Business customer flow featuring interactive quick-reply buttons, order tracking lookups, and instant receipt PDF generation.',
-    features: ['WhatsApp Cloud API', 'Interactive Quick-Replies', 'Automated PDF Dispatch', 'Dynamic Language Switcher'],
-    thumbnail: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=1200&q=80',
-    videoUrl: 'https://www.youtube.com/watch?v=r_bN0Bf0UoM',
-    duration: '03:10',
-    clientIndustry: 'D2C Retail & Logistics',
-    keyImpact: '98.4% Message Open Rate',
-    published: true,
-    featured: false,
-    displayOrder: 5,
-    createdAt: new Date().toISOString()
-  },
-  {
-    _id: 'demo_6',
-    title: 'Autonomous Outbound Sales Research & Enrichment Agent',
-    slug: 'outbound-sales-research-agent',
-    category: 'AI AGENTS',
-    description: 'Demonstration of an autonomous market researcher agent that scrapes prospect company news, identifies pain points, and crafts bespoke, highly targeted outreach blueprints.',
-    features: ['Live Web Extraction', 'Sentiment Analysis', 'Custom Draft Generation', 'CRM Enrichment'],
-    thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80',
-    videoUrl: 'https://www.youtube.com/watch?v=e_wK50d6f4c',
-    duration: '04:30',
-    clientIndustry: 'B2B Professional Services',
-    keyImpact: '140+ Hours Saved Monthly',
-    published: true,
-    featured: false,
-    displayOrder: 6,
-    createdAt: new Date().toISOString()
-  }
-];
+// Clean initial state for showcase demos (no mock/sample items; preserved across restarts)
+const initialDemos: DemoItem[] = [];
+const DB_FILE_PATH = path.join(process.cwd(), 'data', 'database_state.json');
 
 const initialFaqs: FAQItem[] = [
   {
@@ -451,7 +350,7 @@ const initialContent: CompanyContent = {
       linkedin: 'https://linkedin.com/in/ahsanali',
       twitter: 'https://x.com/ahsanali',
       email: 'ahsan@ahsanailabs.com',
-      whatsapp: '+92 344 6899742'
+      whatsapp: '+92 331 6041183'
     }
   },
   about: {
@@ -486,8 +385,8 @@ const initialSettings: SiteSettings = {
   logoText: 'AHSAN AI LABS',
   siteUrl: 'https://ahsanailab.bond',
   primaryEmail: 'contact@ahsanailabs.com',
-  supportWhatsApp: '+92 344 6899742',
-  whatsappDirectNumber: '923446899742',
+  supportWhatsApp: '+92 331 6041183',
+  whatsappDirectNumber: '923316041183',
   address: 'Global Technology Labs • Available Worldwide',
   officeHours: 'Monday – Saturday: 24/7 Enterprise Coverage',
   socialLinks: {
@@ -520,6 +419,7 @@ class DatabaseService {
   constructor() {
     this.state = this.loadState();
     this.syncAdminCredentialsWithEnv();
+    this.persist();
     this.initializeMongo().catch(err => {
       console.warn('[Database] MongoDB connection notice:', err?.message || err);
     });
@@ -655,6 +555,12 @@ class DatabaseService {
         if (!rest.n8nOrderWebhookUrl || rest.n8nOrderWebhookUrl === 'https://n8n-130-110-123-57.nip.io/webhook/contact-inquiry') {
           rest.n8nOrderWebhookUrl = process.env.N8N_ORDER_WEBHOOK_URL || 'https://n8n-130-110-123-57.nip.io/webhook/order-inquiry';
         }
+        if (!rest.supportWhatsApp || rest.supportWhatsApp.includes('344') || rest.supportWhatsApp.includes('6899742')) {
+          rest.supportWhatsApp = '+92 331 6041183';
+        }
+        if (!rest.whatsappDirectNumber || rest.whatsappDirectNumber.includes('344') || rest.whatsappDirectNumber.includes('6899742')) {
+          rest.whatsappDirectNumber = '923316041183';
+        }
         this.state.settings = { ...this.state.settings, ...rest };
         stateModifiedFromMongo = true;
       } else {
@@ -669,6 +575,9 @@ class DatabaseService {
       const mongoContent = await contentCol.findOne({ _id: 'global_content' as any });
       if (mongoContent) {
         const { _id, ...rest } = mongoContent as any;
+        if (rest.founder?.socials?.whatsapp && (rest.founder.socials.whatsapp.includes('344') || rest.founder.socials.whatsapp.includes('6899742'))) {
+          rest.founder.socials.whatsapp = '+92 331 6041183';
+        }
         this.state.content = { ...this.state.content, ...rest };
         stateModifiedFromMongo = true;
       } else {
@@ -706,16 +615,22 @@ class DatabaseService {
       }
 
       // 5. Synchronize Demos from MongoDB
-      const demoCount = await demosCol.countDocuments().catch(() => 0);
-      if (demoCount > 0) {
-        const mongoDemos = await demosCol.find().sort({ displayOrder: 1 }).toArray();
+      // Purge any legacy sample/mock demos if present in MongoDB
+      await demosCol.deleteMany({ _id: { $in: ['demo_1', 'demo_2', 'demo_3', 'demo_4', 'demo_5', 'demo_6'] as any } }).catch(() => {});
+      const mongoDemos = await demosCol.find({ _id: { $nin: ['demo_1', 'demo_2', 'demo_3', 'demo_4', 'demo_5', 'demo_6'] as any } }).sort({ displayOrder: 1 }).toArray();
+      if (mongoDemos.length > 0) {
         this.state.demos = mongoDemos.map(d => {
           const { _id, ...rest } = d as any;
           return { _id: _id.toString(), ...rest };
         });
         stateModifiedFromMongo = true;
-      } else if (this.state.demos.length > 0) {
-        await demosCol.insertMany(this.state.demos as any).catch(() => {});
+      } else {
+        // Only if user has non-mock demos in active state, sync them to MongoDB
+        const genuineDemos = this.state.demos.filter(d => !['demo_1', 'demo_2', 'demo_3', 'demo_4', 'demo_5', 'demo_6'].includes(d._id));
+        this.state.demos = genuineDemos;
+        if (genuineDemos.length > 0) {
+          await demosCol.insertMany(genuineDemos as any).catch(() => {});
+        }
       }
 
       // 6. Synchronize FAQs from MongoDB
@@ -746,6 +661,7 @@ class DatabaseService {
 
       if (stateModifiedFromMongo) {
         console.log('[Database] Synchronized live production data from MongoDB to active operational cache.');
+        this.persist();
       }
     } catch (err: any) {
       console.error('[Database] Collection synchronization notice:', err?.message || err);
@@ -931,6 +847,7 @@ class DatabaseService {
       }
 
       // 5. Demos
+      await db.collection('demos').deleteMany({ _id: { $in: ['demo_1', 'demo_2', 'demo_3', 'demo_4', 'demo_5', 'demo_6'] as any } }).catch(() => {});
       for (const demo of this.state.demos) {
         await db.collection('demos').replaceOne(
           { _id: demo._id as any },
@@ -994,7 +911,7 @@ class DatabaseService {
     const defaultState: DatabaseState = {
       inquiries: initialInquiries,
       services: initialServices,
-      demos: initialDemos,
+      demos: [],
       faqs: initialFaqs,
       content: initialContent,
       settings: initialSettings,
@@ -1004,7 +921,7 @@ class DatabaseService {
           adminEmail: 'system@ahsanailabs.com',
           action: 'SYSTEM_INITIALIZED',
           targetType: 'SYSTEM',
-          details: 'AHSAN AI LABS enterprise platform initialized with MongoDB architecture.',
+          details: 'AHSAN AI LABS enterprise platform initialized with durable file persistence and MongoDB architecture.',
           timestamp: new Date().toISOString()
         }
       ],
@@ -1015,6 +932,59 @@ class DatabaseService {
       uptimeChecks: [],
       systemAlerts: []
     };
+
+    // Load from durable local disk persistence if present
+    try {
+      if (fs.existsSync(DB_FILE_PATH)) {
+        const fileContent = fs.readFileSync(DB_FILE_PATH, 'utf-8');
+        const parsed = JSON.parse(fileContent);
+        if (parsed && typeof parsed === 'object') {
+          // Filter out any legacy mock/sample demo IDs if they lingered in old records
+          const rawDemos: DemoItem[] = Array.isArray(parsed.demos) ? parsed.demos : [];
+          const cleanDemos = rawDemos.filter(d => !['demo_1', 'demo_2', 'demo_3', 'demo_4', 'demo_5', 'demo_6'].includes(d._id));
+
+          const loadedSettings = parsed.settings ? { ...defaultState.settings, ...parsed.settings } : defaultState.settings;
+          if (!loadedSettings.supportWhatsApp || loadedSettings.supportWhatsApp.includes('344') || loadedSettings.supportWhatsApp.includes('6899742')) {
+            loadedSettings.supportWhatsApp = '+92 331 6041183';
+          }
+          if (!loadedSettings.whatsappDirectNumber || loadedSettings.whatsappDirectNumber.includes('344') || loadedSettings.whatsappDirectNumber.includes('6899742')) {
+            loadedSettings.whatsappDirectNumber = '923316041183';
+          }
+
+          const loadedContent = parsed.content ? { ...defaultState.content, ...parsed.content } : defaultState.content;
+          if (loadedContent?.founder?.socials?.whatsapp && (loadedContent.founder.socials.whatsapp.includes('344') || loadedContent.founder.socials.whatsapp.includes('6899742'))) {
+            loadedContent.founder.socials.whatsapp = '+92 331 6041183';
+          }
+
+          return {
+            ...defaultState,
+            ...parsed,
+            inquiries: Array.isArray(parsed.inquiries) ? parsed.inquiries : defaultState.inquiries,
+            services: Array.isArray(parsed.services) ? parsed.services : defaultState.services,
+            demos: cleanDemos,
+            faqs: Array.isArray(parsed.faqs) ? parsed.faqs : defaultState.faqs,
+            content: loadedContent,
+            settings: loadedSettings,
+            auditLogs: Array.isArray(parsed.auditLogs) ? parsed.auditLogs : defaultState.auditLogs,
+            admins: Array.isArray(parsed.admins) && parsed.admins.length > 0 ? parsed.admins : defaultState.admins,
+            analyticsEvents: Array.isArray(parsed.analyticsEvents) ? parsed.analyticsEvents : [],
+            webVitals: Array.isArray(parsed.webVitals) ? parsed.webVitals : [],
+            errorLogs: Array.isArray(parsed.errorLogs) ? parsed.errorLogs : [],
+            uptimeChecks: Array.isArray(parsed.uptimeChecks) ? parsed.uptimeChecks : [],
+            systemAlerts: Array.isArray(parsed.systemAlerts) ? parsed.systemAlerts : []
+          };
+        }
+      } else {
+        // Create the data directory and initialize persistent storage file
+        const dataDir = path.dirname(DB_FILE_PATH);
+        if (!fs.existsSync(dataDir)) {
+          fs.mkdirSync(dataDir, { recursive: true });
+        }
+        fs.writeFileSync(DB_FILE_PATH, JSON.stringify(defaultState, null, 2), 'utf-8');
+      }
+    } catch (err) {
+      console.warn('[Database] Notice loading database_state.json:', err);
+    }
 
     return defaultState;
   }
@@ -1038,7 +1008,18 @@ class DatabaseService {
   }
 
   public persist() {
-    // Asynchronously sync modified state to MongoDB directly
+    // 1. Immediately persist full state to local disk file (durable across restarts & rebuilds)
+    try {
+      const dataDir = path.dirname(DB_FILE_PATH);
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      fs.writeFileSync(DB_FILE_PATH, JSON.stringify(this.state, null, 2), 'utf-8');
+    } catch (err) {
+      console.error('[Database] Failed to write database_state.json to disk:', err);
+    }
+
+    // 2. Asynchronously sync modified state to MongoDB directly when connected
     if (this.isMongoConnected && this.mongoDb) {
       this.syncStateToMongo().catch(err => {
         console.error('[Database] Mongo sync error:', err);

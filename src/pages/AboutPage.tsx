@@ -40,7 +40,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
       linkedin: 'https://linkedin.com/in/ahsanali',
       twitter: 'https://x.com/ahsanali',
       email: 'ahsan@ahsanailabs.com',
-      whatsapp: '+92 344 6899742'
+      whatsapp: '+92 331 6041183'
     }
   };
 

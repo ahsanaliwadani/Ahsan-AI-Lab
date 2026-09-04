@@ -321,7 +321,7 @@ export default function App() {
 
           {/* Quick WhatsApp Floating Contact */}
           <a
-            href={`https://wa.me/${settings?.whatsappDirectNumber || '15550198234'}?text=${encodeURIComponent('Hello AHSAN AI LABS team, I would like to inquire about building an AI automation system for my business.')}`}
+            href={`https://wa.me/${settings?.whatsappDirectNumber || '923316041183'}?text=${encodeURIComponent('Hello AHSAN AI LABS team, I would like to inquire about building an AI automation system for my business.')}`}
             target="_blank"
             rel="noreferrer"
             className="flex items-center space-x-2 px-4 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xl shadow-emerald-950/80 hover:scale-105 active:scale-95 transition-all duration-200"

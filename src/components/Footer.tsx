@@ -46,7 +46,7 @@ export const Footer: React.FC<FooterProps> = ({ settings, onNavigate, onSelectSe
 
             <div className="pt-2 flex items-center space-x-4">
               <a 
-                href={`https://wa.me/${settings?.whatsappDirectNumber || '15550198234'}`} 
+                href={`https://wa.me/${settings?.whatsappDirectNumber || '923316041183'}`} 
                 target="_blank" 
                 rel="noreferrer"
                 className="inline-flex items-center space-x-2 text-xs text-slate-300 hover:text-cyan-400 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800 transition-colors"

@@ -664,7 +664,7 @@ Best regards,
 Ahsan Ali
 Founder & Principal AI Systems Architect
 AHSAN AI LABS | https://ahsanailab.bond
-WhatsApp: +92 344 6899742`;
+WhatsApp: +92 331 6041183`;
 
     setProposalText(draft);
     setProposalCopied(false);
@@ -1973,7 +1973,7 @@ WhatsApp: +92 344 6899742`;
                     </a>
 
                     <a
-                      href={`mailto:${selectedInquiry.email}?subject=${encodeURIComponent(`AHSAN AI LABS — Project Scope: ${selectedInquiry.service}`)}&body=${encodeURIComponent(`Dear ${selectedInquiry.fullName},\n\nThank you for reaching out to AHSAN AI LABS regarding ${selectedInquiry.service}.\n\nWe have reviewed your project requirements:\n"${selectedInquiry.requirements}"\n\nLet's schedule a brief 15-minute discovery consultation to discuss the architecture and timeline.\n\nBest regards,\nAhsan Ali\nFounder & Principal AI Architect\nAHSAN AI LABS\nWhatsApp: +92 344 6899742`)}`}
+                      href={`mailto:${selectedInquiry.email}?subject=${encodeURIComponent(`AHSAN AI LABS — Project Scope: ${selectedInquiry.service}`)}&body=${encodeURIComponent(`Dear ${selectedInquiry.fullName},\n\nThank you for reaching out to AHSAN AI LABS regarding ${selectedInquiry.service}.\n\nWe have reviewed your project requirements:\n"${selectedInquiry.requirements}"\n\nLet's schedule a brief 15-minute discovery consultation to discuss the architecture and timeline.\n\nBest regards,\nAhsan Ali\nFounder & Principal AI Architect\nAHSAN AI LABS\nWhatsApp: +92 331 6041183`)}`}
                       className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center space-x-1.5 transition-colors border border-slate-700"
                     >
                       <Mail className="w-3.5 h-3.5 text-cyan-400" />
@@ -3202,7 +3202,7 @@ WhatsApp: +92 344 6899742`;
                     <label className="text-slate-300 font-medium">WhatsApp Number</label>
                     <input
                       type="text"
-                      placeholder="+92 344 6899742"
+                      placeholder="+92 331 6041183"
                       value={content.founder?.socials?.whatsapp || ''}
                       onChange={(e) => setContent({
                         ...content,
@@ -4516,7 +4516,7 @@ WhatsApp: +92 344 6899742`;
                       <li><b>Webhook Trigger:</b> Receives inquiry payload (Inquiry ID, Client Name, Email, WhatsApp, Service, Budget, Timeline, Problem, Requirements, Pre-rendered HTML & WhatsApp text).</li>
                       <li><b>Node 1 (Gmail Send Email):</b> Sends branded confirmation email to client with customized inquiry dossier and next discovery call steps.</li>
                       <li><b>Node 2 (HTTP Request - Evolution API WhatsApp):</b> Dispatches instant WhatsApp confirmation to client phone number (`inquiry.whatsapp`).</li>
-                      <li><b>Node 3 (Admin Alert):</b> Dispatches formatted WhatsApp message and email to Ahsan Ali (+92 344 6899742 / admin@ahsanailabs.com).</li>
+                      <li><b>Node 3 (Admin Alert):</b> Dispatches formatted WhatsApp message and email to Ahsan Ali (+92 331 6041183 / admin@ahsanailabs.com).</li>
                     </ul>
                   </div>
 

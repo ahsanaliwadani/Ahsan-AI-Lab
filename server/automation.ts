@@ -53,7 +53,7 @@ Our AI engineering team has received your query and will get in touch with you s
 *${inquiry.inquiryId}*
 
 💬 *Direct Support WhatsApp:*
-+92 344 6899742 | https://ahsanailab.bond
+${settings.supportWhatsApp || '+92 331 6041183'} | https://ahsanailab.bond
 
 _Intelligence. Automation. Innovation._`;
 
@@ -71,7 +71,7 @@ Thank you for submitting your project consultation request to *AHSAN AI LABS*!
 Our Lead AI Architect (*Ahsan Ali*) and team are reviewing your technical requirements. We will connect with you via *${inquiry.preferredContact}* within 4 to 24 business hours to share live architecture demos and discuss deployment.
 
 🌐 *Website:* https://ahsanailab.bond
-💬 *Direct WhatsApp:* +92 344 6899742
+💬 *Direct WhatsApp:* ${settings.supportWhatsApp || '+92 331 6041183'}
 
 _AHSAN AI LABS — Autonomous AI Systems & Enterprise Automation_`;
 
@@ -129,14 +129,14 @@ _AHSAN AI LABS — Autonomous AI Systems & Enterprise Automation_`;
       </p>
 
       <div style="text-align: center;">
-        <a href="https://wa.me/923446899742?text=${encodeURIComponent(`Hello Ahsan AI Labs team, I submitted an inquiry with Reference ID ${inquiry.inquiryId}.`)}" class="button">
+        <a href="https://wa.me/${settings.whatsappDirectNumber || '923316041183'}?text=${encodeURIComponent(`Hello Ahsan AI Labs team, I submitted an inquiry with Reference ID ${inquiry.inquiryId}.`)}" class="button">
            Chat Directly on WhatsApp
         </a>
       </div>
     </div>
     <div class="footer">
       AHSAN AI LABS • Global AI & Automation Systems<br>
-      Website: <a href="https://ahsanailab.bond" style="color: #38bdf8;">ahsanailab.bond</a> • WhatsApp: +92 344 6899742
+      Website: <a href="https://ahsanailab.bond" style="color: #38bdf8;">ahsanailab.bond</a> • WhatsApp: ${settings.supportWhatsApp || '+92 331 6041183'}
     </div>
   </div>
 </body>
@@ -233,7 +233,7 @@ https://ahsanailab.bond/admin`;
 
     // Clean phone number for Evolution API (digits only with no spaces or symbols)
     const sanitizedCustomerPhone = inquiry.whatsapp.replace(/[^0-9]/g, '');
-    const sanitizedAdminPhone = settings.supportWhatsApp.replace(/[^0-9]/g, '') || '923446899742';
+    const sanitizedAdminPhone = settings.supportWhatsApp.replace(/[^0-9]/g, '') || '923316041183';
 
     const n8nPayload = {
       event: isContactForm ? 'CONTACT_FORM_SUBMITTED' : 'ORDER_INQUIRY_CREATED',
@@ -426,7 +426,7 @@ https://ahsanailab.bond/admin`;
         fullName: 'Alex Morgan (Test Lead)',
         companyName: 'Apex Health Systems',
         email: 'alex@apexhealth.example.com',
-        whatsapp: '+92 344 6899742',
+        whatsapp: '+92 331 6041183',
         service: 'AI Voice Agents'
       }
     };
@@ -481,7 +481,7 @@ https://ahsanailab.bond/admin`;
       fullName: 'Tariq Mehmood',
       companyName: 'Global Logistics Group',
       email: 'tariq@globallogistics.example.com',
-      whatsapp: '+92 344 6899742',
+      whatsapp: '+92 331 6041183',
       country: 'Pakistan / UAE',
       service: type === 'CONTACT' ? 'Business Automation' : 'AI Voice Agents',
       industry: 'Supply Chain & Telephony',

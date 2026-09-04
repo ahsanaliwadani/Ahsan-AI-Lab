@@ -348,90 +348,92 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       </section>
 
-      {/* 5. SECTION: DEMO SHOWCASE */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="space-y-2 text-left">
-            <div className="text-xs font-semibold uppercase tracking-widest text-blue-400">
-              SYSTEM SHOWCASES
+      {/* 5. SECTION: DEMO SHOWCASE (Rendered only when demos are available) */}
+      {displayDemos.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="space-y-2 text-left">
+              <div className="text-xs font-semibold uppercase tracking-widest text-blue-400">
+                SYSTEM SHOWCASES
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-bold font-heading text-white tracking-tight">
+                PROVEN ARCHITECTURES IN ACTION
+              </h2>
+              <p className="text-sm text-slate-400 max-w-xl">
+                Watch real architectural recordings of our AI agents, telephony bots, and automation pipelines.
+              </p>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold font-heading text-white tracking-tight">
-              PROVEN ARCHITECTURES IN ACTION
-            </h2>
-            <p className="text-sm text-slate-400 max-w-xl">
-              Watch real architectural recordings of our AI agents, telephony bots, and automation pipelines.
-            </p>
+
+            <button
+              onClick={() => onNavigate('/demos')}
+              className="inline-flex items-center text-sm font-semibold text-blue-400 hover:text-cyan-300 transition-colors self-start md:self-end"
+            >
+              <span>VIEW ALL DEMOS ({demos.length})</span>
+              <ArrowRight className="w-4 h-4 ml-1.5" />
+            </button>
           </div>
 
-          <button
-            onClick={() => onNavigate('/demos')}
-            className="inline-flex items-center text-sm font-semibold text-blue-400 hover:text-cyan-300 transition-colors self-start md:self-end"
-          >
-            <span>VIEW ALL DEMOS ({demos.length})</span>
-            <ArrowRight className="w-4 h-4 ml-1.5" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {displayDemos.map((demo) => (
-            <div 
-              key={demo._id}
-              className="group rounded-2xl bg-slate-900/70 border border-slate-800 overflow-hidden flex flex-col justify-between hover:border-blue-700/60 transition-all shadow-lg"
-            >
-              <div>
-                {/* Video Thumbnail with Hover Overlay */}
-                <div 
-                  className="relative aspect-video w-full bg-slate-950 cursor-pointer overflow-hidden"
-                  onClick={() => onWatchDemo(demo)}
-                >
-                  <img
-                    src={demo.thumbnail}
-                    alt={demo.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-80"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-blue-600/90 text-white flex items-center justify-center shadow-lg shadow-blue-600/40 group-hover:scale-110 transition-transform">
-                      <Play className="w-5 h-5 translate-x-0.5 fill-current" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {displayDemos.map((demo) => (
+              <div 
+                key={demo._id}
+                className="group rounded-2xl bg-slate-900/70 border border-slate-800 overflow-hidden flex flex-col justify-between hover:border-blue-700/60 transition-all shadow-lg"
+              >
+                <div>
+                  {/* Video Thumbnail with Hover Overlay */}
+                  <div 
+                    className="relative aspect-video w-full bg-slate-950 cursor-pointer overflow-hidden"
+                    onClick={() => onWatchDemo(demo)}
+                  >
+                    <img
+                      src={demo.thumbnail}
+                      alt={demo.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-80"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-blue-600/90 text-white flex items-center justify-center shadow-lg shadow-blue-600/40 group-hover:scale-110 transition-transform">
+                        <Play className="w-5 h-5 translate-x-0.5 fill-current" />
+                      </div>
+                    </div>
+                    <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded bg-black/80 text-[11px] font-mono text-slate-200">
+                      {demo.duration}
+                    </div>
+                    <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-blue-950/90 border border-blue-700/50 text-[10px] font-semibold text-cyan-300 uppercase tracking-wider">
+                      {demo.category}
                     </div>
                   </div>
-                  <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded bg-black/80 text-[11px] font-mono text-slate-200">
-                    {demo.duration}
-                  </div>
-                  <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-blue-950/90 border border-blue-700/50 text-[10px] font-semibold text-cyan-300 uppercase tracking-wider">
-                    {demo.category}
+
+                  <div className="p-5 space-y-3">
+                    <h3 className="text-base font-bold font-heading text-white group-hover:text-cyan-300 transition-colors line-clamp-2">
+                      {demo.title}
+                    </h3>
+                    <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
+                      {demo.description}
+                    </p>
+                    
+                    {demo.keyImpact && (
+                      <div className="text-[11px] font-semibold text-cyan-400 bg-blue-950/40 p-2 rounded-lg border border-blue-900/40">
+                        Impact: {demo.keyImpact}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="p-5 space-y-3">
-                  <h3 className="text-base font-bold font-heading text-white group-hover:text-cyan-300 transition-colors line-clamp-2">
-                    {demo.title}
-                  </h3>
-                  <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
-                    {demo.description}
-                  </p>
-                  
-                  {demo.keyImpact && (
-                    <div className="text-[11px] font-semibold text-cyan-400 bg-blue-950/40 p-2 rounded-lg border border-blue-900/40">
-                      Impact: {demo.keyImpact}
-                    </div>
-                  )}
+                <div className="p-5 pt-0">
+                  <button
+                    onClick={() => onWatchDemo(demo)}
+                    className="w-full flex items-center justify-center px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-blue-600 text-slate-200 hover:text-white text-xs font-semibold transition-all"
+                  >
+                    <Play className="w-3.5 h-3.5 mr-1.5 fill-current" />
+                    <span>Watch Showcase Video</span>
+                  </button>
                 </div>
               </div>
-
-              <div className="p-5 pt-0">
-                <button
-                  onClick={() => onWatchDemo(demo)}
-                  className="w-full flex items-center justify-center px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-blue-600 text-slate-200 hover:text-white text-xs font-semibold transition-all"
-                >
-                  <Play className="w-3.5 h-3.5 mr-1.5 fill-current" />
-                  <span>Watch Showcase Video</span>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 6. SECTION: HOW IT WORKS (01 - 05 PROCESS) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">

@@ -109,7 +109,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
             <div className="space-y-4">
               {/* WhatsApp Card */}
               <a 
-                href={`https://wa.me/${settings?.whatsappDirectNumber || '923446899742'}`}
+                href={`https://wa.me/${settings?.whatsappDirectNumber || '923316041183'}`}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-start space-x-4 p-4 rounded-2xl bg-slate-950 hover:bg-slate-900 border border-slate-800/80 hover:border-emerald-700/60 transition-all group"
@@ -122,7 +122,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
                     Official WhatsApp
                   </div>
                   <div className="text-sm font-bold text-white mt-0.5">
-                    {settings?.supportWhatsApp || '+92 344 6899742'}
+                    {settings?.supportWhatsApp || '+92 331 6041183'}
                   </div>
                   <div className="text-xs text-slate-400 mt-1">
                     Instant response for priority inquiries & enterprise chats.
@@ -281,7 +281,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
                 
                 <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
                   <a
-                    href={`https://wa.me/${settings?.whatsappDirectNumber || '923446899742'}?text=${encodeURIComponent(`Hello Ahsan AI Labs team, I just submitted a message on the contact form with Reference ID ${submittedInquiryId}.`)}`}
+                    href={`https://wa.me/${settings?.whatsappDirectNumber || '923316041183'}?text=${encodeURIComponent(`Hello Ahsan AI Labs team, I just submitted a message on the contact form with Reference ID ${submittedInquiryId}.`)}`}
                     target="_blank"
                     rel="noreferrer"
                     className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors shadow-md shadow-emerald-600/30 space-x-2"

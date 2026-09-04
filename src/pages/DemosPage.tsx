@@ -88,7 +88,17 @@ export const DemosPage: React.FC<DemosPageProps> = ({
       </div>
 
       {/* Demos Grid */}
-      {filteredDemos.length === 0 ? (
+      {demos.length === 0 ? (
+        <div className="p-16 rounded-3xl bg-slate-900/40 border border-slate-800 text-center space-y-4 max-w-2xl mx-auto">
+          <div className="w-14 h-14 rounded-2xl bg-blue-950/60 border border-blue-800/40 flex items-center justify-center mx-auto text-blue-400">
+            <Play className="w-6 h-6 fill-current" />
+          </div>
+          <h3 className="text-lg font-bold text-white">No Showcase Demos Published Yet</h3>
+          <p className="text-slate-400 text-sm max-w-md mx-auto leading-relaxed">
+            Custom system walkthroughs and client demonstrations will appear here once added in the Admin Portal.
+          </p>
+        </div>
+      ) : filteredDemos.length === 0 ? (
         <div className="p-12 rounded-3xl bg-slate-900/40 border border-slate-800 text-center space-y-3">
           <div className="text-slate-400 text-sm">No showcase videos found in this category.</div>
           <button 
