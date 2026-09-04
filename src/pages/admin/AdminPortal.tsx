@@ -34,6 +34,7 @@ import {
   DollarSign,
   ChevronRight,
   Eye,
+  EyeOff,
   Sliders,
   Cpu,
   Zap,
@@ -191,6 +192,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [currentPasswordInput, setCurrentPasswordInput] = useState('');
   const [newPasswordInput, setNewPasswordInput] = useState('');
   const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStatusMsg, setPasswordStatusMsg] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
@@ -3247,13 +3251,13 @@ WhatsApp: +92 344 6899742`;
                   <ImagePlus className="w-4 h-4 text-blue-400" />
                   <span>Brand Logo & Favicon Studio</span>
                 </div>
-                <span className="px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800 text-[10px] font-mono">
-                  Target: /logo.jpg
+                <span className="px-2.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 text-[10px] font-mono font-semibold">
+                  Target: /logo.png (Master Logo & Favicon)
                 </span>
               </div>
 
               <p className="text-slate-300 text-xs leading-relaxed">
-                Directly manage the primary brand logo displayed across the Navbar, Footer, Browser Favicon, and OpenGraph social embeds.
+                Upload or set a single <span className="text-cyan-300 font-mono font-semibold">logo.png</span>. It is automatically used everywhere as the primary brand logo across the Navbar, Footer, Mobile App Icons, Browser Favicon (32x32, 192x192, 512x512), Apple Touch Icon, and OpenGraph social embeds.
               </p>
 
               {logoUploadMsg && (
@@ -3271,7 +3275,7 @@ WhatsApp: +92 344 6899742`;
                 <div className="md:col-span-4 flex flex-col items-center justify-center p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
                   <div className="w-24 h-24 rounded-2xl overflow-hidden bg-slate-950 border-2 border-cyan-500/40 p-1 flex items-center justify-center shadow-lg shadow-cyan-500/10 relative group">
                     <img 
-                      src={`/logo.jpg?t=${logoTimestamp}`} 
+                      src={`/logo.png?t=${logoTimestamp}`} 
                       alt="Brand Logo" 
                       className="w-full h-full object-contain rounded-xl"
                       onError={(e) => {
@@ -3284,8 +3288,8 @@ WhatsApp: +92 344 6899742`;
                       </div>
                     )}
                   </div>
-                  <div className="text-[11px] text-slate-400 font-mono text-center">
-                    Active Brand Logo
+                  <div className="text-[11px] text-emerald-400 font-mono text-center font-medium">
+                    Active: /logo.png
                   </div>
                 </div>
 
@@ -3293,20 +3297,20 @@ WhatsApp: +92 344 6899742`;
                 <div className="md:col-span-8 space-y-3">
                   <div>
                     <label className="text-slate-200 font-bold block mb-1">
-                      Upload New Brand Logo
+                      Upload New Master Logo (logo.png)
                     </label>
                     <p className="text-[11px] text-slate-400 mb-3">
-                      Recommended: High-resolution Square image (512x512 JPG or PNG). Will automatically update site logo, favicon, and social embeds.
+                      Recommended: High-resolution transparent PNG (512x512). Automatically updates both website logo and browser favicon instantly.
                     </p>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3">
                     <label className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold cursor-pointer flex items-center space-x-2 text-xs shadow-md shadow-blue-600/30 transition-colors">
                       <Upload className="w-3.5 h-3.5" />
-                      <span>{isUploadingLogo ? 'Processing Image...' : 'Choose File & Replace Logo'}</span>
+                      <span>{isUploadingLogo ? 'Processing Image...' : 'Choose File & Replace logo.png'}</span>
                       <input 
                         type="file" 
-                        accept="image/jpeg,image/png,image/webp,image/svg+xml" 
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml" 
                         onChange={handleUploadLogo}
                         disabled={isUploadingLogo}
                         className="hidden" 
@@ -3314,13 +3318,13 @@ WhatsApp: +92 344 6899742`;
                     </label>
 
                     <a 
-                      href={`/logo.jpg?t=${logoTimestamp}`} 
+                      href={`/logo.png?t=${logoTimestamp}`} 
                       target="_blank" 
                       rel="noreferrer"
                       className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center space-x-1.5 border border-slate-700 transition-colors"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Open Logo in New Tab</span>
+                      <span>Open logo.png in New Tab</span>
                     </a>
                   </div>
                 </div>
@@ -4103,35 +4107,65 @@ WhatsApp: +92 344 6899742`;
             <form onSubmit={handleChangePassword} className="space-y-3 text-xs">
               <div className="space-y-1">
                 <label className="text-slate-300 font-medium">Current Password</label>
-                <input
-                  type="password"
-                  required
-                  value={currentPasswordInput}
-                  onChange={(e) => setCurrentPasswordInput(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
-                />
+                <div className="relative">
+                  <input
+                    type={showCurrentPassword ? 'text' : 'password'}
+                    required
+                    value={currentPasswordInput}
+                    onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                    className="w-full pl-3 pr-10 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+                    title={showCurrentPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showCurrentPassword ? <EyeOff className="w-3.5 h-3.5 text-cyan-400" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-1">
                 <label className="text-slate-300 font-medium">New Password (min 8 chars)</label>
-                <input
-                  type="password"
-                  required
-                  value={newPasswordInput}
-                  onChange={(e) => setNewPasswordInput(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
-                />
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    required
+                    value={newPasswordInput}
+                    onChange={(e) => setNewPasswordInput(e.target.value)}
+                    className="w-full pl-3 pr-10 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+                    title={showNewPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showNewPassword ? <EyeOff className="w-3.5 h-3.5 text-cyan-400" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-1">
                 <label className="text-slate-300 font-medium">Confirm New Password</label>
-                <input
-                  type="password"
-                  required
-                  value={confirmPasswordInput}
-                  onChange={(e) => setConfirmPasswordInput(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    value={confirmPasswordInput}
+                    onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                    className="w-full pl-3 pr-10 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+                    title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5 text-cyan-400" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
               </div>
 
               <div className="flex justify-end space-x-3 pt-3">

@@ -17,10 +17,26 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   textClassName = '',
   taglineClassName = '',
   className = '',
-  logoSrc = '/logo.jpg',
+  logoSrc = '/logo.png',
   onClick
 }) => {
-  const [imageError, setImageError] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState(logoSrc);
+  const [hasFailedAll, setHasFailedAll] = useState(false);
+
+  React.useEffect(() => {
+    setCurrentSrc(logoSrc);
+    setHasFailedAll(false);
+  }, [logoSrc]);
+
+  const handleImageError = () => {
+    if (currentSrc === '/logo.png' || currentSrc.startsWith('/logo.png?')) {
+      setCurrentSrc('/logo.jpg');
+    } else if (currentSrc === '/logo.jpg' || currentSrc.startsWith('/logo.jpg?')) {
+      setCurrentSrc('/logo.svg');
+    } else {
+      setHasFailedAll(true);
+    }
+  };
 
   const sizeMap = {
     xs: { img: 'h-6 sm:h-7 w-auto max-h-7', text: 'text-sm', sub: 'text-[9px]' },
@@ -39,11 +55,11 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
     >
       {/* Clean Direct Logo - Without any box, border or background */}
       <div className="shrink-0 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-        {!imageError ? (
+        {!hasFailedAll ? (
           <img
-            src={logoSrc}
+            src={currentSrc}
             alt="AHSAN AI LABS Logo"
-            onError={() => setImageError(true)}
+            onError={handleImageError}
             className={`${config.img} object-contain block`}
             referrerPolicy="no-referrer"
           />

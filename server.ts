@@ -288,6 +288,37 @@ app.get(['/zohoverify/verifyforzoho.html', '/verifyforzoho.html'], (req: Request
   res.status(200).send('55503614');
 });
 
+// GET Unified Favicon & Brand Logo Gateway
+// Directs /favicon.ico, /favicon.png, /apple-touch-icon.png, /logo.png, etc. to master logo.png
+app.get([
+  '/favicon.ico',
+  '/favicon.png',
+  '/apple-touch-icon.png',
+  '/apple-touch-icon-precomposed.png',
+  '/logo.png',
+  '/logo.jpg'
+], (req: Request, res: Response, next) => {
+  const candidateFiles = [
+    path.join(process.cwd(), 'public', 'logo.png'),
+    path.join(process.cwd(), 'dist', 'logo.png'),
+    path.join(process.cwd(), 'public', 'assets', 'logo.png'),
+    path.join(process.cwd(), 'public', 'logo.jpg'),
+    path.join(process.cwd(), 'dist', 'logo.jpg'),
+    path.join(process.cwd(), 'public', 'assets', 'logo.jpg')
+  ];
+
+  for (const filePath of candidateFiles) {
+    if (fs.existsSync(filePath)) {
+      const ext = path.extname(filePath).toLowerCase();
+      const contentType = ext === '.png' ? 'image/png' : ext === '.svg' ? 'image/svg+xml' : 'image/jpeg';
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+      return res.sendFile(filePath);
+    }
+  }
+  next();
+});
+
 // GET /api/health
 app.get('/api/health', (req: Request, res: Response) => {
   const server = db.getServerMetrics();
@@ -1053,7 +1084,7 @@ app.post('/api/admin/inquiries/manual-lead', requireAdminAuth, (req: Authenticat
   res.json({ success: true, data: newInquiry });
 });
 
-// POST /api/admin/upload-logo (Upload new logo and update public/logo.jpg)
+// POST /api/admin/upload-logo (Upload new master logo and update public/logo.png & public/logo.jpg)
 app.post('/api/admin/upload-logo', requireAdminAuth, (req: AuthenticatedRequest, res: Response) => {
   try {
     const { fileData, fileName } = req.body;
@@ -1064,27 +1095,57 @@ app.post('/api/admin/upload-logo', requireAdminAuth, (req: AuthenticatedRequest,
     const base64Data = fileData.replace(/^data:image\/[^;]+;base64,/, '');
     const buffer = Buffer.from(base64Data, 'base64');
 
-    const publicLogoPath = path.join(process.cwd(), 'public', 'logo.jpg');
-    fs.writeFileSync(publicLogoPath, buffer);
+    // 1. Write primary master logo.png
+    const publicLogoPng = path.join(process.cwd(), 'public', 'logo.png');
+    const publicLogoJpg = path.join(process.cwd(), 'public', 'logo.jpg');
+    fs.writeFileSync(publicLogoPng, buffer);
+    fs.writeFileSync(publicLogoJpg, buffer);
 
+    // 2. Also write favicon.ico and favicon.png for maximum browser compatibility
+    try {
+      fs.writeFileSync(path.join(process.cwd(), 'public', 'favicon.ico'), buffer);
+      fs.writeFileSync(path.join(process.cwd(), 'public', 'favicon.png'), buffer);
+    } catch (_) {}
+
+    // 3. Mirror into public/assets/ directory
+    const assetsDir = path.join(process.cwd(), 'public', 'assets');
+    if (fs.existsSync(assetsDir)) {
+      try {
+        fs.writeFileSync(path.join(assetsDir, 'logo.png'), buffer);
+        fs.writeFileSync(path.join(assetsDir, 'logo.jpg'), buffer);
+      } catch (_) {}
+    }
+
+    // 4. Mirror into dist/ directory if present
+    const distDir = path.join(process.cwd(), 'dist');
+    if (fs.existsSync(distDir)) {
+      try {
+        fs.writeFileSync(path.join(distDir, 'logo.png'), buffer);
+        fs.writeFileSync(path.join(distDir, 'logo.jpg'), buffer);
+        fs.writeFileSync(path.join(distDir, 'favicon.ico'), buffer);
+        fs.writeFileSync(path.join(distDir, 'favicon.png'), buffer);
+      } catch (_) {}
+    }
+
+    // 5. Store timestamped copy in uploads
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
-    const timestampedName = `logo_${Date.now()}.jpg`;
+    const timestampedName = `logo_${Date.now()}.png`;
     fs.writeFileSync(path.join(uploadsDir, timestampedName), buffer);
 
     db.logAudit({
       adminEmail: req.adminUser?.email || 'admin',
       action: 'BRAND_LOGO_UPDATED',
       targetType: 'BRANDING',
-      details: 'Brand logo updated to public/logo.jpg successfully.'
+      details: 'Master brand logo and favicon updated to public/logo.png successfully.'
     });
 
     res.json({
       success: true,
-      message: 'Brand logo updated successfully!',
-      logoUrl: '/logo.jpg',
+      message: 'Master brand logo & favicon updated successfully!',
+      logoUrl: '/logo.png',
       timestamp: Date.now()
     });
   } catch (err: any) {

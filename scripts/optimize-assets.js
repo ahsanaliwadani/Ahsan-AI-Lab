@@ -53,4 +53,10 @@ targetFiles.forEach((fileName) => {
   fs.writeFileSync(mirroredPath, content, 'utf8');
 });
 
+// 3. Mirror master logo.png
+if (fs.existsSync(path.join(PUBLIC_DIR, 'logo.png'))) {
+  fs.copyFileSync(path.join(PUBLIC_DIR, 'logo.png'), path.join(ASSETS_DIR, 'logo.png'));
+  console.log('✅ Master logo.png mirrored to /public/assets/logo.png');
+}
+
 console.log('🚀 [AHSAN AI LABS] Asset optimization and high-resolution SEO references completed successfully!');
