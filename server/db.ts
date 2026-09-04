@@ -497,9 +497,9 @@ const initialSettings: SiteSettings = {
     youtube: 'https://youtube.com/@ahsanailabs',
     facebook: 'https://facebook.com/ahsanailabs'
   },
-  n8nWebhookUrl: process.env.N8N_WEBHOOK_URL || 'https://n8n-130-110-123-57.nip.io/webhook/contact-inquiry',
+  n8nWebhookUrl: process.env.N8N_WEBHOOK_URL || 'https://n8n-130-110-123-57.nip.io/webhook/order-inquiry',
   n8nContactWebhookUrl: process.env.N8N_CONTACT_WEBHOOK_URL || 'https://n8n-130-110-123-57.nip.io/webhook/contact-inquiry',
-  n8nOrderWebhookUrl: process.env.N8N_ORDER_WEBHOOK_URL || 'https://n8n-130-110-123-57.nip.io/webhook/contact-inquiry',
+  n8nOrderWebhookUrl: process.env.N8N_ORDER_WEBHOOK_URL || 'https://n8n-130-110-123-57.nip.io/webhook/order-inquiry',
   n8nWebhookSecret: process.env.N8N_WEBHOOK_SECRET || '',
   n8nEnabled: true,
   n8nContactEnabled: true,
@@ -652,6 +652,9 @@ class DatabaseService {
       const mongoSettings = await settingsCol.findOne({ _id: 'global_settings' as any });
       if (mongoSettings) {
         const { _id, ...rest } = mongoSettings as any;
+        if (!rest.n8nOrderWebhookUrl || rest.n8nOrderWebhookUrl === 'https://n8n-130-110-123-57.nip.io/webhook/contact-inquiry') {
+          rest.n8nOrderWebhookUrl = process.env.N8N_ORDER_WEBHOOK_URL || 'https://n8n-130-110-123-57.nip.io/webhook/order-inquiry';
+        }
         this.state.settings = { ...this.state.settings, ...rest };
         stateModifiedFromMongo = true;
       } else {

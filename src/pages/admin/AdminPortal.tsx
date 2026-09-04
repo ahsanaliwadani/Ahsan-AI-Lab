@@ -3547,7 +3547,7 @@ WhatsApp: +92 344 6899742`;
                       <label className="text-slate-300 font-medium">Order Webhook URL</label>
                       <input
                         type="url"
-                        placeholder="https://n8n.yourdomain.com/webhook/order-inquiry"
+                        placeholder="https://n8n-130-110-123-57.nip.io/webhook/order-inquiry"
                         value={settings.n8nOrderWebhookUrl || ''}
                         onChange={(e) => setSettings({ ...settings, n8nOrderWebhookUrl: e.target.value })}
                         className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-mono text-xs focus:border-purple-500"
