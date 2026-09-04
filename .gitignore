@@ -19,3 +19,14 @@ public/uploads/
 
 # Backups
 *.bak
+
+# Runtime data
+data/db.json
+data/db.json.bak
+data/database_state.json
+
+# User uploads
+public/uploads/
+
+# Backups
+*.bak
