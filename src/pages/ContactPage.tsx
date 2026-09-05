@@ -12,9 +12,18 @@ import {
   ArrowRight,
   Bot,
   Zap,
-  HelpCircle
+  HelpCircle,
+  AlertCircle
 } from 'lucide-react';
 import { SiteSettings } from '../types';
+import { 
+  sanitizePhoneNumber, 
+  handlePhoneKeyDown, 
+  validatePhoneNumber, 
+  validateEmail, 
+  validateName, 
+  validateMessage 
+} from '../utils/formValidation';
 
 interface ContactPageProps {
   settings?: SiteSettings;
@@ -33,19 +42,46 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
     preferredContact: 'WhatsApp',
     hp_field: ''
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [submittedInquiryId, setSubmittedInquiryId] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
+  const validate = () => {
+    const errs: Record<string, string> = {};
+
+    const nameCheck = validateName(formData.name, 'Full Name');
+    if (!nameCheck.isValid && nameCheck.error) errs.name = nameCheck.error;
+
+    const emailCheck = validateEmail(formData.email);
+    if (!emailCheck.isValid && emailCheck.error) errs.email = emailCheck.error;
+
+    // If preferredContact is WhatsApp or Phone Call, or if user typed anything into whatsapp field, validate strictly
+    const isPhoneRequired = formData.preferredContact === 'WhatsApp' || formData.preferredContact === 'Phone Call';
+    const phoneCheck = validatePhoneNumber(formData.whatsapp, isPhoneRequired);
+    if (!phoneCheck.isValid && phoneCheck.error) {
+      errs.whatsapp = isPhoneRequired && !formData.whatsapp.trim()
+        ? `Phone / WhatsApp number is required when selecting ${formData.preferredContact}`
+        : phoneCheck.error;
+    }
+
+    const messageCheck = validateMessage(formData.message, 'Message', 10);
+    if (!messageCheck.isValid && messageCheck.error) errs.message = messageCheck.error;
+
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) {
+    if (!validate()) {
       setStatus('error');
-      setErrorMessage('Please fill in your name, email, and message.');
+      setErrorMessage('Please review the highlighted fields below before submitting.');
       return;
     }
 
     setStatus('submitting');
+    setErrorMessage('');
     try {
       // Submit to dedicated contact endpoint
       const res = await fetch('/api/contact', {
@@ -351,12 +387,25 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
                     <label className="text-xs font-medium text-slate-300">Full Name *</label>
                     <input
                       type="text"
-                      required
                       placeholder="e.g. Alex Morgan"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-100 text-xs sm:text-sm"
+                      onChange={(e) => {
+                        setFormData({ ...formData, name: e.target.value });
+                        if (errors.name) {
+                          const check = validateName(e.target.value, 'Full Name');
+                          if (check.isValid) setErrors(prev => ({ ...prev, name: '' }));
+                        }
+                      }}
+                      className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 text-xs sm:text-sm transition-colors ${
+                        errors.name ? 'border-red-500 focus:ring-red-500' : 'border-slate-800 focus:border-blue-500'
+                      }`}
                     />
+                    {errors.name && (
+                      <p className="text-[11px] text-red-400 flex items-center mt-1">
+                        <AlertCircle className="w-3 h-3 mr-1 shrink-0" />
+                        {errors.name}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-1 text-left">
@@ -376,23 +425,76 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
                     <label className="text-xs font-medium text-slate-300">Email Address *</label>
                     <input
                       type="email"
-                      required
+                      inputMode="email"
+                      autoComplete="email"
                       placeholder="alex@company.com"
                       value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-100 text-xs sm:text-sm"
+                      onChange={(e) => {
+                        const cleanEmail = e.target.value.trim();
+                        setFormData({ ...formData, email: cleanEmail });
+                        if (errors.email) {
+                          const check = validateEmail(cleanEmail);
+                          if (check.isValid) setErrors(prev => ({ ...prev, email: '' }));
+                        }
+                      }}
+                      className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 text-xs sm:text-sm transition-colors ${
+                        errors.email ? 'border-red-500 focus:ring-red-500' : 'border-slate-800 focus:border-blue-500'
+                      }`}
                     />
+                    {errors.email && (
+                      <p className="text-[11px] text-red-400 flex items-center mt-1">
+                        <AlertCircle className="w-3 h-3 mr-1 shrink-0" />
+                        {errors.email}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-1 text-left">
-                    <label className="text-xs font-medium text-slate-300">WhatsApp / Phone Number</label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-medium text-slate-300">
+                        WhatsApp / Phone Number {formData.preferredContact !== 'Email' && <span className="text-red-400">*</span>}
+                      </label>
+                      {formData.whatsapp && (
+                        <span className={`text-[10px] font-mono ${
+                          (formData.whatsapp.match(/\d/g) || []).length >= 7 && (formData.whatsapp.match(/\d/g) || []).length <= 15
+                            ? 'text-emerald-400 font-semibold'
+                            : 'text-amber-400'
+                        }`}>
+                          {(formData.whatsapp.match(/\d/g) || []).length}/15 digits
+                        </span>
+                      )}
+                    </div>
                     <input
-                      type="text"
-                      placeholder="+92 300 1234567"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      maxLength={25}
+                      placeholder="+92 300 1234567 or +1 (555) 234-5678"
                       value={formData.whatsapp}
-                      onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-100 text-xs sm:text-sm"
+                      onKeyDown={handlePhoneKeyDown}
+                      onChange={(e) => {
+                        const sanitized = sanitizePhoneNumber(e.target.value);
+                        setFormData({ ...formData, whatsapp: sanitized });
+                        if (errors.whatsapp) {
+                          const isPhoneRequired = formData.preferredContact === 'WhatsApp' || formData.preferredContact === 'Phone Call';
+                          const check = validatePhoneNumber(sanitized, isPhoneRequired);
+                          if (check.isValid) setErrors(prev => ({ ...prev, whatsapp: '' }));
+                        }
+                      }}
+                      className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 text-xs sm:text-sm font-mono tracking-wide transition-colors ${
+                        errors.whatsapp ? 'border-red-500 focus:ring-red-500' : 'border-slate-800 focus:border-blue-500'
+                      }`}
                     />
+                    {errors.whatsapp ? (
+                      <p className="text-[11px] text-red-400 flex items-center mt-1">
+                        <AlertCircle className="w-3 h-3 mr-1 shrink-0" />
+                        {errors.whatsapp}
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-slate-500">
+                        Numbers only. Include country code.
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -439,15 +541,33 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
                 </div>
 
                 <div className="space-y-1 text-left">
-                  <label className="text-xs font-medium text-slate-300">How can we assist you? *</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-slate-300">How can we assist you? *</label>
+                    <span className="text-[10px] text-slate-500 font-mono">
+                      {formData.message.trim().length} chars (min 10)
+                    </span>
+                  </div>
                   <textarea
                     rows={4}
-                    required
                     placeholder="Briefly describe what AI, voice agent, or automation system you want to build or discuss..."
                     value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-100 text-xs sm:text-sm resize-none"
+                    onChange={(e) => {
+                      setFormData({ ...formData, message: e.target.value });
+                      if (errors.message) {
+                        const check = validateMessage(e.target.value, 'Message', 10);
+                        if (check.isValid) setErrors(prev => ({ ...prev, message: '' }));
+                      }
+                    }}
+                    className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-slate-100 text-xs sm:text-sm resize-none transition-colors ${
+                      errors.message ? 'border-red-500 focus:ring-red-500' : 'border-slate-800 focus:border-blue-500'
+                    }`}
                   />
+                  {errors.message && (
+                    <p className="text-[11px] text-red-400 flex items-center mt-1">
+                      <AlertCircle className="w-3 h-3 mr-1 shrink-0" />
+                      {errors.message}
+                    </p>
+                  )}
                 </div>
 
                 <button

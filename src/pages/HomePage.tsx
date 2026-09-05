@@ -11,9 +11,12 @@ import {
   Sparkles, 
   TrendingUp, 
   Layers,    
-  Lock
+  Lock,
+  Clock,
+  Cpu
 } from 'lucide-react';
 import { ServiceItem, DemoItem, CompanyContent } from '../types';
+import { AIVisualCanvas } from '../components/AIVisualCanvas';
 
 interface HomePageProps {
   content?: CompanyContent;
@@ -401,10 +404,11 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* 4. SECTION: WHY AI & AUTOMATION? */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 sm:space-y-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
           
-          <div className="lg:col-span-5 space-y-4 text-left">
+          {/* Section Left: Content & Advantages */}
+          <div className="lg:col-span-6 space-y-4 text-left">
             <div className="text-xs font-semibold uppercase tracking-widest text-cyan-400">
               MEASURABLE ADVANTAGE
             </div>
@@ -433,25 +437,98 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
           </div>
 
-          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {content?.metrics && content.metrics.map((metric, idx) => (
-              <div 
-                key={`${metric.label}-${idx}`}
-                className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-[#081120] border border-slate-800 space-y-2 relative overflow-hidden"
-              >
-                <div className="text-3xl sm:text-4xl font-bold font-heading text-white">
-                  {metric.value} <span className="text-xs text-cyan-400 font-normal uppercase">{metric.suffix}</span>
+          {/* Section Right: High-Tech Visual Canvas (ONLY visible on big screen, hidden on small screens) */}
+          <div className="hidden lg:flex lg:col-span-6 relative w-full items-center justify-center">
+            <div className="relative w-full aspect-[4/3] max-w-[540px] xl:max-w-[580px] p-2 rounded-3xl bg-gradient-to-b from-cyan-500/20 via-blue-600/10 to-slate-950/80 border border-cyan-500/30 shadow-2xl shadow-blue-950/80 backdrop-blur-xl overflow-hidden flex items-center justify-center group">
+              {/* Dynamic Animated Particle AI Canvas */}
+              <AIVisualCanvas className="absolute inset-0 w-full h-full rounded-[22px] opacity-80 pointer-events-none" />
+
+              {/* Cyber grid overlay and ambient lighting */}
+              <div className="absolute inset-0 bg-[radial-gradient(#0284c7_1px,transparent_1px)] [background-size:20px_20px] opacity-25 pointer-events-none" />
+              <div className="absolute -top-12 -right-12 w-48 h-48 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
+
+              {/* Animated orbital rings */}
+              <div className="absolute w-64 h-64 rounded-full border border-cyan-500/20 shadow-[0_0_50px_rgba(6,182,212,0.15)] animate-[spin_35s_linear_infinite]" />
+              <div className="absolute w-48 h-48 rounded-full border border-dashed border-blue-400/30 animate-[spin_20s_linear_infinite_reverse]" />
+              <div className="absolute w-36 h-36 rounded-full border border-cyan-400/30" />
+
+              {/* Central Glowing AI Engine Core */}
+              <div className="relative z-10 w-28 h-28 rounded-2xl bg-gradient-to-br from-blue-950/95 via-slate-950/90 to-cyan-950/95 border border-cyan-400/50 shadow-[0_0_40px_rgba(6,182,212,0.4)] flex flex-col items-center justify-center backdrop-blur-md transition-transform group-hover:scale-105 duration-300">
+                <div className="w-10 h-10 rounded-xl bg-cyan-950/70 border border-cyan-500/40 flex items-center justify-center text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.5)]">
+                  <Cpu className="w-5 h-5" />
                 </div>
-                <div className="text-sm font-medium text-slate-300">
-                  {metric.label}
+                <div className="text-[10px] font-bold text-white tracking-wider font-mono mt-1.5 uppercase">
+                  AI CORE
                 </div>
-                <div className="text-xs text-slate-500">
-                  Verified across production enterprise client deployments.
+                <div className="flex items-center space-x-1 mt-0.5">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
+                  </span>
+                  <span className="text-[9px] text-emerald-400 font-mono font-semibold">ONLINE</span>
                 </div>
               </div>
-            ))}
+
+              {/* Top-Right: 99.98% System SLA */}
+              <div className="absolute top-3.5 right-3.5 bg-[#081120]/90 border border-cyan-500/35 rounded-xl px-3 py-1.5 shadow-lg backdrop-blur-md flex items-center space-x-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                </span>
+                <span className="text-xs font-semibold text-slate-200 font-mono">99.98% System SLA</span>
+              </div>
+
+              {/* Top-Left: Speed & Latency */}
+              <div className="absolute top-3.5 left-3.5 bg-[#081120]/90 border border-blue-500/35 rounded-xl px-3 py-1.5 shadow-lg backdrop-blur-md flex items-center space-x-2">
+                <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="text-xs font-semibold text-slate-200 font-mono">&lt; 1.8s Response</span>
+              </div>
+
+              {/* Bottom-Left: 24/7 Autonomous Operations */}
+              <div className="absolute bottom-3.5 left-3.5 bg-[#081120]/90 border border-cyan-500/35 rounded-xl px-3 py-2 shadow-lg backdrop-blur-md flex items-center space-x-2.5">
+                <div className="w-7 h-7 rounded-lg bg-blue-900/60 border border-blue-500/30 flex items-center justify-center shrink-0">
+                  <Clock className="w-4 h-4 text-cyan-300" />
+                </div>
+                <div>
+                  <div className="text-[11px] font-bold text-white leading-none">24/7 Autonomous</div>
+                  <div className="text-[9px] text-slate-400 font-mono mt-0.5">Zero Manual Delay</div>
+                </div>
+              </div>
+
+              {/* Bottom-Right: 10x ROI Scalability */}
+              <div className="absolute bottom-3.5 right-3.5 bg-[#081120]/90 border border-emerald-500/35 rounded-xl px-3 py-2 shadow-lg backdrop-blur-md flex items-center space-x-2.5">
+                <div className="w-7 h-7 rounded-lg bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-4 h-4 text-emerald-300" />
+                </div>
+                <div>
+                  <div className="text-[11px] font-bold text-white leading-none">10x Scalability</div>
+                  <div className="text-[9px] text-emerald-400 font-mono mt-0.5">Verified Client ROI</div>
+                </div>
+              </div>
+            </div>
           </div>
 
+        </div>
+
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {content?.metrics && content.metrics.map((metric, idx) => (
+            <div 
+              key={`${metric.label}-${idx}`}
+              className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-[#081120] border border-slate-800 space-y-2 relative overflow-hidden hover:border-slate-700 transition-colors"
+            >
+              <div className="text-3xl sm:text-4xl font-bold font-heading text-white">
+                {metric.value} <span className="text-xs text-cyan-400 font-normal uppercase">{metric.suffix}</span>
+              </div>
+              <div className="text-sm font-medium text-slate-300">
+                {metric.label}
+              </div>
+              <div className="text-xs text-slate-500">
+                Verified across production enterprise client deployments.
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 

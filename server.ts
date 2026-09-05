@@ -582,6 +582,18 @@ app.post('/api/contact', inquiryRateLimiter, async (req: Request, res: Response)
       });
     }
 
+    // Phone / WhatsApp validation
+    if (resolvedWhatsApp && resolvedWhatsApp !== 'Not provided') {
+      const digitMatches = resolvedWhatsApp.match(/\d/g);
+      const digitCount = digitMatches ? digitMatches.length : 0;
+      if (digitCount < 7 || digitCount > 15) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please provide a valid WhatsApp / phone number (7 to 15 digits).'
+        });
+      }
+    }
+
     // Save directly to database
     const savedInquiry = db.createInquiry({
       fullName: resolvedName,
@@ -690,6 +702,18 @@ app.post('/api/inquiries', inquiryRateLimiter, async (req: Request, res: Respons
         success: false,
         message: 'Please provide a valid email address.'
       });
+    }
+
+    // Phone / WhatsApp validation
+    if (resolvedWhatsApp && resolvedWhatsApp !== 'Not provided') {
+      const digitMatches = resolvedWhatsApp.match(/\d/g);
+      const digitCount = digitMatches ? digitMatches.length : 0;
+      if (digitCount < 7 || digitCount > 15) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please provide a valid WhatsApp / phone number with country code (7 to 15 digits).'
+        });
+      }
     }
 
     // 1. Save to Database FIRST (MongoDB / Persistent Store)

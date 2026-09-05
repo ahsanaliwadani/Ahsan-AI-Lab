@@ -19,6 +19,15 @@ import {
 } from 'lucide-react';
 import { ServiceType, ContactMethod, Inquiry } from '../types';
 import { trackEvent } from '../utils/analytics';
+import { 
+  sanitizePhoneNumber, 
+  handlePhoneKeyDown, 
+  validatePhoneNumber, 
+  validateEmail, 
+  validateName, 
+  validateCompany, 
+  validateMessage 
+} from '../utils/formValidation';
 
 interface GetStartedPageProps {
   initialService?: string;
@@ -90,24 +99,27 @@ export const GetStartedPage: React.FC<GetStartedPageProps> = ({
 
   const validate = () => {
     const errs: Record<string, string> = {};
-    if (!formData.fullName.trim()) errs.fullName = 'Full Name is required';
-    if (!formData.companyName.trim()) errs.companyName = 'Company Name is required';
-    
-    if (!formData.email.trim()) {
-      errs.email = 'Email address is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errs.email = 'Please provide a valid email format';
-    }
 
-    if (!formData.whatsapp.trim()) {
-      errs.whatsapp = 'WhatsApp number with country code is required';
-    } else if (formData.whatsapp.trim().length < 6) {
-      errs.whatsapp = 'Please enter a complete phone/WhatsApp number';
-    }
+    const nameCheck = validateName(formData.fullName, 'Full Name');
+    if (!nameCheck.isValid && nameCheck.error) errs.fullName = nameCheck.error;
 
-    if (!formData.country.trim()) errs.country = 'Country / Location is required';
-    if (!formData.problem.trim()) errs.problem = 'Please tell us what problem you want to solve';
-    if (!formData.requirements.trim()) errs.requirements = 'Please describe your system requirements';
+    const companyCheck = validateCompany(formData.companyName, true);
+    if (!companyCheck.isValid && companyCheck.error) errs.companyName = companyCheck.error;
+
+    const emailCheck = validateEmail(formData.email);
+    if (!emailCheck.isValid && emailCheck.error) errs.email = emailCheck.error;
+
+    const phoneCheck = validatePhoneNumber(formData.whatsapp, true);
+    if (!phoneCheck.isValid && phoneCheck.error) errs.whatsapp = phoneCheck.error;
+
+    const countryCheck = validateName(formData.country, 'Country / Location');
+    if (!countryCheck.isValid && countryCheck.error) errs.country = countryCheck.error;
+
+    const problemCheck = validateMessage(formData.problem, 'Problem description', 10);
+    if (!problemCheck.isValid && problemCheck.error) errs.problem = problemCheck.error;
+
+    const reqCheck = validateMessage(formData.requirements, 'System requirements', 10);
+    if (!reqCheck.isValid && reqCheck.error) errs.requirements = reqCheck.error;
 
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -371,13 +383,21 @@ export const GetStartedPage: React.FC<GetStartedPageProps> = ({
                   value={formData.fullName}
                   onChange={(e) => {
                     setFormData({ ...formData, fullName: e.target.value });
-                    if (errors.fullName) setErrors({ ...errors, fullName: '' });
+                    if (errors.fullName) {
+                      const check = validateName(e.target.value, 'Full Name');
+                      if (check.isValid) setErrors(prev => ({ ...prev, fullName: '' }));
+                    }
                   }}
-                  className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-xs sm:text-sm text-slate-100 ${
+                  className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-xs sm:text-sm text-slate-100 transition-colors ${
                     errors.fullName ? 'border-red-500 focus:ring-red-500' : 'border-slate-800 focus:border-blue-500'
                   }`}
                 />
-                {errors.fullName && <p className="text-[11px] text-red-400">{errors.fullName}</p>}
+                {errors.fullName && (
+                  <p className="text-[11px] text-red-400 flex items-center mt-1">
+                    <AlertCircle className="w-3 h-3 mr-1 shrink-0" />
+                    {errors.fullName}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1 text-left">
@@ -390,13 +410,21 @@ export const GetStartedPage: React.FC<GetStartedPageProps> = ({
                   value={formData.companyName}
                   onChange={(e) => {
                     setFormData({ ...formData, companyName: e.target.value });
-                    if (errors.companyName) setErrors({ ...errors, companyName: '' });
+                    if (errors.companyName) {
+                      const check = validateCompany(e.target.value, true);
+                      if (check.isValid) setErrors(prev => ({ ...prev, companyName: '' }));
+                    }
                   }}
-                  className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-xs sm:text-sm text-slate-100 ${
+                  className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-xs sm:text-sm text-slate-100 transition-colors ${
                     errors.companyName ? 'border-red-500 focus:ring-red-500' : 'border-slate-800 focus:border-blue-500'
                   }`}
                 />
-                {errors.companyName && <p className="text-[11px] text-red-400">{errors.companyName}</p>}
+                {errors.companyName && (
+                  <p className="text-[11px] text-red-400 flex items-center mt-1">
+                    <AlertCircle className="w-3 h-3 mr-1 shrink-0" />
+                    {errors.companyName}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -407,36 +435,75 @@ export const GetStartedPage: React.FC<GetStartedPageProps> = ({
                 </label>
                 <input
                   type="email"
+                  inputMode="email"
+                  autoComplete="email"
                   placeholder="marcus@vance.com"
                   value={formData.email}
                   onChange={(e) => {
-                    setFormData({ ...formData, email: e.target.value });
-                    if (errors.email) setErrors({ ...errors, email: '' });
+                    const cleanEmail = e.target.value.trim();
+                    setFormData({ ...formData, email: cleanEmail });
+                    if (errors.email) {
+                      const check = validateEmail(cleanEmail);
+                      if (check.isValid) setErrors(prev => ({ ...prev, email: '' }));
+                    }
                   }}
-                  className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-xs sm:text-sm text-slate-100 ${
+                  className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-xs sm:text-sm text-slate-100 transition-colors ${
                     errors.email ? 'border-red-500 focus:ring-red-500' : 'border-slate-800 focus:border-blue-500'
                   }`}
                 />
-                {errors.email && <p className="text-[11px] text-red-400">{errors.email}</p>}
+                {errors.email && (
+                  <p className="text-[11px] text-red-400 flex items-center mt-1">
+                    <AlertCircle className="w-3 h-3 mr-1 shrink-0" />
+                    {errors.email}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1 text-left">
-                <label className="text-xs font-medium text-slate-300">
-                  WhatsApp Number (with Country Code) <span className="text-red-400">*</span>
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-slate-300">
+                    WhatsApp / Phone <span className="text-red-400">*</span>
+                  </label>
+                  {formData.whatsapp && (
+                    <span className={`text-[10px] font-mono ${
+                      (formData.whatsapp.match(/\d/g) || []).length >= 7 && (formData.whatsapp.match(/\d/g) || []).length <= 15
+                        ? 'text-emerald-400 font-semibold'
+                        : 'text-amber-400'
+                    }`}>
+                      {(formData.whatsapp.match(/\d/g) || []).length}/15 digits
+                    </span>
+                  )}
+                </div>
                 <input
-                  type="text"
-                  placeholder="+1 (555) 234-5678"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  maxLength={25}
+                  placeholder="+1 (555) 234-5678 or +92 300 1234567"
                   value={formData.whatsapp}
+                  onKeyDown={handlePhoneKeyDown}
                   onChange={(e) => {
-                    setFormData({ ...formData, whatsapp: e.target.value });
-                    if (errors.whatsapp) setErrors({ ...errors, whatsapp: '' });
+                    const sanitized = sanitizePhoneNumber(e.target.value);
+                    setFormData({ ...formData, whatsapp: sanitized });
+                    if (errors.whatsapp) {
+                      const check = validatePhoneNumber(sanitized, true);
+                      if (check.isValid) setErrors(prev => ({ ...prev, whatsapp: '' }));
+                    }
                   }}
-                  className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-xs sm:text-sm text-slate-100 ${
+                  className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-xs sm:text-sm text-slate-100 font-mono tracking-wide transition-colors ${
                     errors.whatsapp ? 'border-red-500 focus:ring-red-500' : 'border-slate-800 focus:border-blue-500'
                   }`}
                 />
-                {errors.whatsapp && <p className="text-[11px] text-red-400">{errors.whatsapp}</p>}
+                {errors.whatsapp ? (
+                  <p className="text-[11px] text-red-400 flex items-center mt-1">
+                    <AlertCircle className="w-3 h-3 mr-1 shrink-0" />
+                    {errors.whatsapp}
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-slate-500">
+                    Numbers only. Please include country code.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1 text-left">
@@ -449,13 +516,21 @@ export const GetStartedPage: React.FC<GetStartedPageProps> = ({
                   value={formData.country}
                   onChange={(e) => {
                     setFormData({ ...formData, country: e.target.value });
-                    if (errors.country) setErrors({ ...errors, country: '' });
+                    if (errors.country) {
+                      const check = validateName(e.target.value, 'Country / Location');
+                      if (check.isValid) setErrors(prev => ({ ...prev, country: '' }));
+                    }
                   }}
-                  className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-xs sm:text-sm text-slate-100 ${
+                  className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-xs sm:text-sm text-slate-100 transition-colors ${
                     errors.country ? 'border-red-500 focus:ring-red-500' : 'border-slate-800 focus:border-blue-500'
                   }`}
                 />
-                {errors.country && <p className="text-[11px] text-red-400">{errors.country}</p>}
+                {errors.country && (
+                  <p className="text-[11px] text-red-400 flex items-center mt-1">
+                    <AlertCircle className="w-3 h-3 mr-1 shrink-0" />
+                    {errors.country}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -518,41 +593,67 @@ export const GetStartedPage: React.FC<GetStartedPageProps> = ({
             </div>
 
             <div className="space-y-1 text-left">
-              <label className="text-xs font-medium text-slate-300">
-                What Problem Do You Want to Solve? <span className="text-red-400">*</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-slate-300">
+                  What Problem Do You Want to Solve? <span className="text-red-400">*</span>
+                </label>
+                <span className="text-[10px] text-slate-500 font-mono">
+                  {formData.problem.trim().length} chars (min 10)
+                </span>
+              </div>
               <textarea
                 rows={3}
                 placeholder="e.g. We lose 30% of incoming leads because our sales team cannot reply after 6 PM, and our staff spends 15 hours a week copy-pasting customer details into spreadsheets."
                 value={formData.problem}
                 onChange={(e) => {
                   setFormData({ ...formData, problem: e.target.value });
-                  if (errors.problem) setErrors({ ...errors, problem: '' });
+                  if (errors.problem) {
+                    const check = validateMessage(e.target.value, 'Problem description', 10);
+                    if (check.isValid) setErrors(prev => ({ ...prev, problem: '' }));
+                  }
                 }}
-                className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-xs sm:text-sm text-slate-100 resize-none ${
-                  errors.problem ? 'border-red-500' : 'border-slate-800 focus:border-blue-500'
+                className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-xs sm:text-sm text-slate-100 resize-none transition-colors ${
+                  errors.problem ? 'border-red-500 focus:ring-red-500' : 'border-slate-800 focus:border-blue-500'
                 }`}
               />
-              {errors.problem && <p className="text-[11px] text-red-400">{errors.problem}</p>}
+              {errors.problem && (
+                <p className="text-[11px] text-red-400 flex items-center mt-1">
+                  <AlertCircle className="w-3 h-3 mr-1 shrink-0" />
+                  {errors.problem}
+                </p>
+              )}
             </div>
 
             <div className="space-y-1 text-left">
-              <label className="text-xs font-medium text-slate-300">
-                Describe Your System Requirements & Desired Features <span className="text-red-400">*</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-slate-300">
+                  Describe Your System Requirements & Desired Features <span className="text-red-400">*</span>
+                </label>
+                <span className="text-[10px] text-slate-500 font-mono">
+                  {formData.requirements.trim().length} chars (min 10)
+                </span>
+              </div>
               <textarea
                 rows={4}
                 placeholder="e.g. Need an AI Voice Agent that answers phone calls on our Twilio number, checks our Google Calendar for open slots, books appointments, and sends a WhatsApp confirmation to the caller."
                 value={formData.requirements}
                 onChange={(e) => {
                   setFormData({ ...formData, requirements: e.target.value });
-                  if (errors.requirements) setErrors({ ...errors, requirements: '' });
+                  if (errors.requirements) {
+                    const check = validateMessage(e.target.value, 'System requirements', 10);
+                    if (check.isValid) setErrors(prev => ({ ...prev, requirements: '' }));
+                  }
                 }}
-                className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-xs sm:text-sm text-slate-100 resize-none ${
-                  errors.requirements ? 'border-red-500' : 'border-slate-800 focus:border-blue-500'
+                className={`w-full px-4 py-3 rounded-xl bg-slate-950 border text-xs sm:text-sm text-slate-100 resize-none transition-colors ${
+                  errors.requirements ? 'border-red-500 focus:ring-red-500' : 'border-slate-800 focus:border-blue-500'
                 }`}
               />
-              {errors.requirements && <p className="text-[11px] text-red-400">{errors.requirements}</p>}
+              {errors.requirements && (
+                <p className="text-[11px] text-red-400 flex items-center mt-1">
+                  <AlertCircle className="w-3 h-3 mr-1 shrink-0" />
+                  {errors.requirements}
+                </p>
+              )}
             </div>
 
             {/* Timeline & Budget Grid */}
